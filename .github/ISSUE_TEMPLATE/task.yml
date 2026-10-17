@@ -1,0 +1,78 @@
+name: Task
+description: Define a bounded, independently deliverable unit of work
+title: ""
+body:
+  - type: markdown
+    attributes:
+      value: Discuss these fields with the developer before implementation. Preserve decisions here rather than relying on chat history.
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Problem or desired outcome
+      description: What should be different when this issue is complete?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: In scope
+      description: List the behavior and deliverables included in this issue.
+    validations:
+      required: true
+  - type: textarea
+    id: non_scope
+    attributes:
+      label: Out of scope
+      description: Record nearby work this issue intentionally excludes.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: Add a testable checklist for completion.
+      placeholder: "- [ ] Observable behavior and expected result"
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies and related work
+      description: Link blocking, blocked, parent, or related issues. Write None when there are none.
+  - type: input
+    id: base_branch
+    attributes:
+      label: Base branch
+      description: Name the branch this work should start from and merge into.
+      placeholder: main
+    validations:
+      required: true
+  - type: textarea
+    id: affected_areas
+    attributes:
+      label: Anticipated affected areas
+      description: List files, components, services, schemas, or shared interfaces likely to change.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification plan
+      description: List commands and manual checks that will demonstrate completion.
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Known risks and assumptions
+      description: Record uncertainty, coordination needs, and assumptions. Write None when there are none.
+  - type: checkboxes
+    id: coordination
+    attributes:
+      label: Coordination
+      options:
+        - label: The owner and affected areas are visible to the team.
+          required: true
+        - label: Shared-interface changes have been coordinated or are called out above.
+          required: true
+
