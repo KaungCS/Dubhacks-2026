@@ -44,12 +44,18 @@ export async function POST(request: Request) {
     );
   }
 
+  // Sequential on purpose: Calendar first, then Drive. Avoids orphaning a
+  // Drive folder when Calendar fails. If Drive fails after Calendar succeeds,
+  // return a partial result so the officer can still open the event.
+  let calendar: { id?: string; htmlLink?: string };
   try {
-    const [calendar, drive] = await Promise.all([
-      createCalendarEvent(session.accessToken, parsed.data),
-      createDriveFolder(session.accessToken, parsed.data),
-    ]);
+    calendar = await createCalendarEvent(session.accessToken, parsed.data);
+  } catch (error) {
+    return googleErrorResponse(error, "Calendar");
+  }
 
+  try {
+    const drive = await createDriveFolder(session.accessToken, parsed.data);
     return NextResponse.json({
       calendar,
       drive,
@@ -58,17 +64,37 @@ export async function POST(request: Request) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Google API request failed";
-    const lower = message.toLowerCase();
-    const scopeHint =
-      lower.includes("insufficient") ||
-      lower.includes("scope") ||
-      lower.includes("permission")
-        ? " Check that Calendar Events and Drive File scopes are enabled on the OAuth consent screen, then sign in again."
-        : "";
-
     return NextResponse.json(
-      { error: `${message}.${scopeHint}` },
+      {
+        error: `Calendar event was created, but Drive folder failed: ${message}.${scopeHint(message)} Open the Calendar link and retry Drive later, or create the folder manually.`,
+        calendar,
+        plan: parsed.data,
+        partial: true,
+      },
       { status: 502 },
     );
   }
+}
+
+function scopeHint(message: string): string {
+  const lower = message.toLowerCase();
+  if (
+    lower.includes("insufficient") ||
+    lower.includes("scope") ||
+    lower.includes("permission")
+  ) {
+    return " Check that Calendar Events and Drive File scopes are enabled on the OAuth consent screen, then sign in again.";
+  }
+  return "";
+}
+
+function googleErrorResponse(error: unknown, surface: string) {
+  const message =
+    error instanceof Error ? error.message : "Google API request failed";
+  return NextResponse.json(
+    {
+      error: `${surface} request failed: ${message}.${scopeHint(message)}`,
+    },
+    { status: 502 },
+  );
 }

@@ -52,7 +52,14 @@ export function PlanFlow() {
         });
         const data = (await response.json()) as ConfirmResult & {
           error?: string;
+          partial?: boolean;
         };
+        // Partial success: Calendar created, Drive failed — still show the event link.
+        if (data.partial && data.calendar) {
+          setResult(data);
+          setError(data.error ?? "Drive folder failed after Calendar create.");
+          return;
+        }
         if (!response.ok) {
           throw new Error(data.error ?? "Could not create Calendar/Drive items");
         }
@@ -68,16 +75,25 @@ export function PlanFlow() {
   }
 
   if (result) {
+    const driveOk = Boolean(result.drive?.webViewLink || result.drive?.id);
     return (
       <div className="animate-rise space-y-6">
         <div>
           <h1 className="font-[family-name:var(--font-display)] text-4xl tracking-tight">
-            Event kicked off
+            {driveOk ? "Event kicked off" : "Calendar created"}
           </h1>
           <p className="mt-2 text-[var(--ink-soft)]">
-            {result.plan.title} is on the calendar and has a Drive folder.
+            {driveOk
+              ? `${result.plan.title} is on the calendar and has a Drive folder.`
+              : `${result.plan.title} is on the calendar. Drive folder was not created — see the error below.`}
           </p>
         </div>
+
+        {error ? (
+          <p className="rounded-xl border border-[rgba(140,40,40,0.25)] bg-[rgba(255,240,240,0.8)] px-4 py-3 text-sm text-[#6b1f1f]">
+            {error}
+          </p>
+        ) : null}
 
         <div className="panel space-y-3">
           {result.calendar?.htmlLink ? (

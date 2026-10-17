@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import type { JWT } from "next-auth/jwt";
+import { authConfig } from "@/auth.config";
 
 const GOOGLE_SCOPES = [
   "openid",
@@ -48,6 +49,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
@@ -61,19 +63,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  pages: {
-    signIn: "/",
-  },
   callbacks: {
-    authorized({ auth, request }) {
-      const path = request.nextUrl.pathname;
-      const isProtected =
-        path.startsWith("/dashboard") || path.startsWith("/plan");
-      if (isProtected) {
-        return !!auth?.user;
-      }
-      return true;
-    },
+    ...authConfig.callbacks,
     async jwt({ token, account }) {
       if (account) {
         return {
@@ -103,5 +94,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
   },
-  trustHost: true,
 });
