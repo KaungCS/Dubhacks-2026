@@ -1,75 +1,78 @@
-# Repository Agent Contract
+# GitHub Issue Authoring
 
-This repository is a four-person hackathon project developed with Codex, Claude Code, and Cursor. Keep coordination lightweight, preserve human control, and optimize for small changes that can merge independently.
+This repository is developed with Codex, Claude Code, and Cursor. When a developer describes proposed work in a CLI conversation, help turn that discussion into durable GitHub issues that another agent can implement without access to the original chat.
 
-## Current project state
+## Discuss before creating
 
-The product and application stack are not selected yet. Do not invent architecture, dependencies, or setup commands. When the stack is chosen, update this file and `CONTRIBUTING.md` with the exact install, run, lint, build, and test commands.
+Inspect the relevant repository files and Git history without changing product code. Discuss the request with the developer until these points are concrete:
 
-## Turning a discussion into issues
-
-Before implementation, inspect the relevant repository state and discuss the desired outcome with the developer. Agree on:
-
-- the problem or outcome;
+- the problem or desired outcome;
+- relevant repository findings and existing behavior;
 - in-scope and out-of-scope behavior;
 - testable acceptance criteria;
-- dependencies and related work;
-- the base branch (`main`, a release branch, or another named branch);
-- affected files, components, and shared interfaces;
-- verification expectations and known risks.
+- dependencies or related issues;
+- the intended base branch when known;
+- affected files, components, or shared interfaces;
+- verification expectations;
+- risks and assumptions.
 
-Create one bounded GitHub issue or an ordered set of independently deliverable issues. Put the agreed context in each issue rather than relying on chat history.
+Do not invent requirements to fill gaps. Ask one focused question at a time when an answer would materially change the issue.
 
-Issue creation has two modes:
+## Decide issue boundaries
 
-- Default: show the complete issue draft or issue set and wait for developer approval before writing to GitHub.
-- Immediate: create the discussed issues without another preview only when the developer explicitly requests immediate creation. Treat that authorization as limited to the current request unless the developer clearly makes it a standing instruction.
+Prefer one bounded, independently deliverable issue. Split the request only when parts can be implemented and reviewed independently or have a real dependency order. Explain the split and identify blocking relationships in the issue descriptions.
 
-Use `gh issue create --title ... --body-file ...` so multiline descriptions and acceptance criteria are preserved. Report every created issue number and URL. Creating several issues does not authorize starting all of them.
+Do not begin implementation while authoring issues unless the developer separately asks you to start one.
 
-## Starting one issue
+## Issue creation authorization
 
-The developer selects exactly one issue to implement and confirms its base branch. From the repository root, run:
+Use preview-and-approve by default:
 
-```bash
-scripts/start-issue ISSUE --base BRANCH
+1. Show the complete proposed title and body for every issue.
+2. Wait for the developer to approve or revise them.
+3. Create only the approved issues.
+
+Create immediately without another preview only when the developer explicitly requests immediate creation. Treat that permission as applying only to the current request unless the developer clearly establishes a standing instruction.
+
+## Required issue description
+
+Use this structure so a new developer or agent can resume from the issue alone:
+
+```markdown
+## Problem / outcome
+
+## Context and findings
+
+## In scope
+
+## Out of scope
+
+## Acceptance criteria
+- [ ] Observable, testable result
+
+## Dependencies
+
+## Base branch
+
+## Affected areas
+
+## Verification
+
+## Risks and assumptions
 ```
 
-Use `--dry-run` when the developer wants to inspect the assignment, branch name, and worktree path without GitHub writes. The helper requires authenticated GitHub CLI access, assigns an unowned issue to the current GitHub user, refuses issues owned by someone else, and creates a linked issue branch in `.worktrees/`.
+Acceptance criteria describe observable completion, not implementation activity. Use literal expected behavior where known. Mark genuine unknowns as assumptions or questions rather than hiding them.
 
-Continue the same developer-agent conversation using the printed `WORKTREE_PATH`. Do not implement other issues merely because they were created during decomposition.
+## Create the issue
 
-## Ownership and parallel work
+Use GitHub CLI with a body file so multiline Markdown is preserved:
 
-- One issue has one human owner at a time.
-- One implementation branch addresses one issue or one tightly coupled change.
-- Announce anticipated files or subsystems before editing.
-- Coordinate before changing a file or shared contract another teammate may be changing.
-- Treat API schemas, database migrations, environment variables, dependency versions, and cross-component types as shared contracts.
-- Agree on the shared interface first when parallel work must meet at a boundary.
+```bash
+gh issue create --title "TITLE" --body-file PATH
+```
 
-## Implementation boundaries
+Before creating anything, confirm `gh auth status` succeeds and the current repository is the intended target. Add labels, assignees, milestones, projects, or parent relationships only when the developer requests them or the repository already defines an applicable convention.
 
-- Read the issue and relevant existing code before editing.
-- Make the smallest change that meets the acceptance criteria.
-- Do not silently expand scope; propose a follow-up issue.
-- Preserve unrelated and uncommitted changes. Never rewrite another contributor's work merely for style.
-- Avoid destructive Git operations and never commit secrets, credentials, or local environment files.
-- Stop and ask when ownership, intent, or a potentially destructive action is ambiguous.
+If GitHub CLI is missing, authentication fails, or repository access is insufficient, stop before external writes and tell the developer the exact setup command or permission needed.
 
-## Verification and handoff
-
-- Add or update tests for behavior changes when the selected stack supports them.
-- Run the narrowest relevant checks during development and all documented checks before handoff.
-- Report commands and observed results; do not claim unobserved success.
-- Summarize changed files, validation evidence, limitations, risks, and follow-up work.
-- Do not commit, push, deploy, merge, or perform other external writes unless the developer's request authorizes that action.
-
-## Branches, commits, and pull requests
-
-- Issue implementation branches must include the issue number. `scripts/start-issue` creates `<issue>-<slug>`.
-- Use conventional commit prefixes and include the issue number immediately after the prefix, for example `feat (#123): add event search`.
-- Synchronize with the selected base branch and rerun verification before handoff.
-- Keep pull requests small. Include `Closes #123`, the selected base branch, validation evidence, known risks, affected shared areas, and follow-up work.
-- Obtain teammate review for shared interfaces, architecture, security-sensitive behavior, and overlapping areas.
-
+After creation, report each issue number and URL, its dependency order, and any unresolved question. Issue creation alone does not authorize branch creation, implementation, commits, pushes, or pull requests.

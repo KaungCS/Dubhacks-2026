@@ -13,6 +13,13 @@ body:
     validations:
       required: true
   - type: textarea
+    id: context
+    attributes:
+      label: Context and repository findings
+      description: Record relevant current behavior, files, constraints, and discoveries so another agent does not need the original chat.
+    validations:
+      required: true
+  - type: textarea
     id: scope
     attributes:
       label: In scope

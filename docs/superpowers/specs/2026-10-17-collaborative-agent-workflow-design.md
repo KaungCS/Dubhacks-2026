@@ -23,15 +23,14 @@ The workflow must remain lightweight enough for a hackathon. It should coordinat
 
 No custom skill or large planning harness will be added initially. Those mechanisms are useful only after the team discovers a recurring, project-specific workflow that cannot be expressed concisely in repository instructions.
 
-GitHub CLI (`gh`) will provide the common automation interface for all three agent tools. Each contributor must install it and authenticate with an account that can create and assign issues, create branches, and open pull requests in the repository.
+## Issue authoring
 
-## Issue authoring and kickoff
-
-A developer may begin from `main`, a release branch, or another explicitly selected base branch and describe a feature, defect, or other unit of work to an agent. The developer and agent discuss the outcome, scope, acceptance criteria, dependencies, affected areas, and verification expectations before implementation.
+A developer describes a feature, defect, or other unit of work to an agent. The agent inspects relevant repository context, then the developer and agent discuss the outcome, findings, scope, acceptance criteria, dependencies, affected areas, and verification expectations.
 
 The agent then drafts one bounded issue or decomposes the request into a small ordered set of issues. Issue descriptions must preserve the agreed context and include:
 
 - the problem or desired outcome;
+- relevant repository findings and existing behavior;
 - in-scope and out-of-scope behavior;
 - testable acceptance criteria;
 - relevant dependencies and related issues;
@@ -44,21 +43,21 @@ Issue creation uses one of two authorization modes:
 - **Preview by default:** show the complete proposed issue or issue set and wait for developer approval before creating anything on GitHub.
 - **Immediate when explicitly authorized:** if the developer clearly asks the agent to create issues without another preview, create the discussed issues immediately. This authorization applies only to the current request unless the developer explicitly establishes a broader standing instruction.
 
-After creating the issues, the agent reports their numbers and URLs. For the issue being started now, it assigns the developer, creates a GitHub-linked branch from the selected base branch, and checks that branch out in an isolated worktree when supported. The same developer-agent conversation then continues there so the discovery context is retained. Creating additional issues does not authorize starting them.
+Agents create issues with GitHub CLI so the same process works from Codex, Claude Code, and Cursor. After creation, the agent reports every issue number and URL, its dependency order, and unresolved questions. Issue creation does not authorize branch creation or implementation.
 
 ## Work lifecycle
 
-1. Discuss and create one or more GitHub issues through the issue-authoring workflow above.
-2. Select exactly one issue to start, one human owner, and an explicit base branch. Record affected areas so teammates can identify likely overlap.
-3. Create a short-lived, GitHub-linked branch from the selected base branch, named with the issue number and a concise slug.
+1. Create or claim one GitHub issue with a bounded outcome and acceptance criteria.
+2. Assign one human owner. Record affected areas so teammates can identify likely overlap.
+3. Create a short-lived branch from current `main`, named with the issue number and a concise slug.
 4. Use one agent session for the issue. The agent reads the repository instructions, the issue, and relevant existing code before editing.
 5. Keep changes within the issue scope. New work becomes a follow-up issue rather than silent scope expansion.
 6. Commit coherent checkpoints using conventional prefixes such as `feat:`, `fix:`, `test:`, `docs:`, and `chore:`.
-7. Synchronize with the selected base branch, resolve conflicts on the feature branch, and rerun applicable verification.
+7. Synchronize with `main`, resolve conflicts on the feature branch, and rerun applicable verification.
 8. Open a small pull request that states what changed, how it was verified, known risks, and follow-up work.
 9. Obtain a teammate review for shared interfaces, architecture, security-sensitive behavior, or overlapping areas. Merge only after required checks pass.
-10. Delete the merged issue branch, return to the appropriate base branch, and begin another issue only when the developer chooses it.
-11. Include the issue number in every issue implementation branch and commit message. Place it after the conventional commit prefix, for example `feat (#123): add event search`.
+10. Delete the merged branch and claim the next issue.
+11. Always include the issue number in every new branch name and within every commit message. The issue number should be after the conventional prefixes as described above. Ex. `feat (#number): xyz`
 
 ## Concurrency and ownership rules
 
@@ -89,7 +88,6 @@ Agents will:
 - `AGENTS.md`: canonical cross-agent repository contract and project command placeholders.
 - `CLAUDE.md`: minimal import of `AGENTS.md` plus no duplicated policy.
 - `CONTRIBUTING.md`: concise human workflow and branch/commit conventions.
-- `scripts/start-issue`: shared GitHub CLI entry point for creating or selecting a linked issue branch and worktree from an explicit base branch.
 - `.github/ISSUE_TEMPLATE/task.yml`: task ownership, scope, overlap, acceptance, and verification fields.
 - `.github/pull_request_template.md`: scope, validation, risks, and coordination checklist.
 - `README.md`: point contributors and agents to the workflow without inventing the pending product idea.
@@ -102,7 +100,6 @@ Because the repository currently contains no application stack, verification for
 - check Markdown and YAML for obvious structural errors;
 - run `git diff --check`;
 - verify that `CLAUDE.md` imports the canonical instructions;
-- validate the issue-start script without performing GitHub writes, and check its missing-authentication and invalid-input behavior;
 - scan for duplicated or contradictory rules;
 - confirm the Git working tree contains only intended changes before committing.
 
@@ -112,7 +109,7 @@ Once the team selects a stack, the first setup change must replace command place
 
 - Codex, Claude Code, and Cursor receive materially identical repository guidance.
 - A teammate can understand how to claim, implement, validate, review, and merge work in under five minutes.
-- A developer and agent can turn an agreed task into a complete GitHub issue and linked working branch without manually copying context or constructing Git commands.
+- A new agent can understand the problem, findings, scope, and acceptance criteria from the GitHub issue without access to the original discussion.
 - Concurrent tasks have visible owners and anticipated areas of change.
 - Pull requests contain reproducible verification evidence.
 - The workflow adds minimal recurring overhead and can evolve as the project architecture becomes known.
@@ -122,5 +119,4 @@ Once the team selects a stack, the first setup change must replace command place
 - Selecting the hackathon product or technology stack.
 - Creating a comprehensive project-management system.
 - Automating deployments or configuring branch protection.
-- Centrally dispatching or remotely launching developers' local agents.
 - Adding tool-specific skills, hooks, or duplicated rule sets before a concrete need appears.
