@@ -23,6 +23,28 @@ The workflow must remain lightweight enough for a hackathon. It should coordinat
 
 No custom skill or large planning harness will be added initially. Those mechanisms are useful only after the team discovers a recurring, project-specific workflow that cannot be expressed concisely in repository instructions.
 
+## Issue authoring
+
+A developer describes a feature, defect, or other unit of work to an agent. The agent inspects relevant repository context, then the developer and agent discuss the outcome, findings, scope, acceptance criteria, dependencies, affected areas, and verification expectations.
+
+The agent then drafts one bounded issue or decomposes the request into a small ordered set of issues. Issue descriptions must preserve the agreed context and include:
+
+- the problem or desired outcome;
+- relevant repository findings and existing behavior;
+- in-scope and out-of-scope behavior;
+- testable acceptance criteria;
+- relevant dependencies and related issues;
+- the selected base branch when it is known;
+- anticipated files, components, or shared interfaces;
+- verification expectations and any known risks.
+
+Issue creation uses one of two authorization modes:
+
+- **Preview by default:** show the complete proposed issue or issue set and wait for developer approval before creating anything on GitHub.
+- **Immediate when explicitly authorized:** if the developer clearly asks the agent to create issues without another preview, create the discussed issues immediately. This authorization applies only to the current request unless the developer explicitly establishes a broader standing instruction.
+
+Agents create issues with GitHub CLI so the same process works from Codex, Claude Code, and Cursor. After creation, the agent reports every issue number and URL, its dependency order, and unresolved questions. Issue creation does not authorize branch creation or implementation.
+
 ## Work lifecycle
 
 1. Create or claim one GitHub issue with a bounded outcome and acceptance criteria.
@@ -87,6 +109,7 @@ Once the team selects a stack, the first setup change must replace command place
 
 - Codex, Claude Code, and Cursor receive materially identical repository guidance.
 - A teammate can understand how to claim, implement, validate, review, and merge work in under five minutes.
+- A new agent can understand the problem, findings, scope, and acceptance criteria from the GitHub issue without access to the original discussion.
 - Concurrent tasks have visible owners and anticipated areas of change.
 - Pull requests contain reproducible verification evidence.
 - The workflow adds minimal recurring overhead and can evolve as the project architecture becomes known.
