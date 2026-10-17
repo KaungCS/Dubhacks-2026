@@ -1,30 +1,16 @@
-import type { TablesInsert, Task } from '@/lib/db'
+/** Public contracts for tasks (Jun calendar + Dom/rest of app). */
 
-// Stub from the scaffold. Jackson owns this file and replaces it; keep the signatures (TEAM_PLAN.md "Contracts").
-
-export type NewTask = TablesInsert<'tasks'> & { assignee_ids?: string[]; tag_ids?: string[] }
-
-// Creates the task, its assignees and tags, and sends the once-a-day assignment email.
-export async function createTask(input: NewTask): Promise<Task> {
-  const { assignee_ids, tag_ids, ...task } = input
-  void assignee_ids
-  void tag_ids
-  return {
-    id: crypto.randomUUID(),
-    description: null,
-    event_id: null,
-    due_at: null,
-    status: 'todo',
-    difficulty: 'medium',
-    is_prereq: false,
-    completed_at: null,
-    created_by: null,
-    created_at: new Date().toISOString(),
-    ...task,
-  }
-}
-
-export async function listTasksForCalendar(workspaceId: string, from: Date, to: Date): Promise<Task[]> {
-  void [workspaceId, from, to]
-  return []
-}
+export { createTask } from "./create-task";
+export { listTasksForCalendar } from "./list-tasks-for-calendar";
+export { getTask } from "./get-task";
+export { listTasks, listTasksSince } from "./list-tasks";
+export { updateTask } from "./update-task";
+export { listWorkspaceOfficers } from "./users";
+export type {
+  Task,
+  NewTask,
+  UpdateTaskInput,
+  TaskStatus,
+  TaskDifficulty,
+} from "./types";
+export type { OfficerProfile } from "./users";
