@@ -1,6 +1,5 @@
 name: Task
 description: Define a bounded, independently deliverable unit of work
-title: ""
 body:
   - type: markdown
     attributes:
@@ -50,10 +49,8 @@ body:
     id: base_branch
     attributes:
       label: Base branch
-      description: Name the branch this work should start from and merge into.
+      description: Name the branch this work should start from and merge into. Leave blank when it has not been decided.
       placeholder: main
-    validations:
-      required: true
   - type: textarea
     id: affected_areas
     attributes:
@@ -82,4 +79,3 @@ body:
           required: true
         - label: Shared-interface changes have been coordinated or are called out above.
           required: true
-
