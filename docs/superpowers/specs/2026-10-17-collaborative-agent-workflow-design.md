@@ -35,6 +35,7 @@ No custom skill or large planning harness will be added initially. Those mechani
 8. Open a small pull request that states what changed, how it was verified, known risks, and follow-up work.
 9. Obtain a teammate review for shared interfaces, architecture, security-sensitive behavior, or overlapping areas. Merge only after required checks pass.
 10. Delete the merged branch and claim the next issue.
+11. Always include the issue number in every new branch name and within every commit message. The issue number should be after the conventional prefixes as described above. Ex. `feat (#number): xyz`
 
 ## Concurrency and ownership rules
 
