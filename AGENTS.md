@@ -91,3 +91,13 @@ Club Ops App for student club officers. Spec: `Club Ops App — Data Model & MVP
 - Design: mostly white, flat, minimal. Buttons are rounded pills with a 1px black border and no shadow, gradient, shine or accent color. Use the shared components in `components/ui/` (owned by Kaung) and don't style your own lookalikes. See "Design" in `TEAM_PLAN.md`.
 - Never edit `components/ui/` unless the user is Kaung.
 - Scope: do what the spec says in its thin form. Email is sent only in the two cases in the spec. No Discord, no digest, no weekly summary, no task dependencies.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

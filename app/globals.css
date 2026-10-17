@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+/* Flat design: no shadow or blur utilities exist. No gradients either (see TEAM_PLAN.md "Design"). */
+@theme {
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-shadow-*: initial;
+  --blur-*: initial;
+}
+
+body {
+  background: #fff;
+  color: #171717;
+}

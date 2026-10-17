@@ -60,12 +60,20 @@ Foundation (Kaung), used by everyone:
 ```ts
 // lib/auth
 requireUser(): Promise<User>
-requireMembership(workspaceId: string): Promise<{ user: User; membership: Membership }>
+requireMembership(workspaceId?: string): Promise<{ user: User; membership: Membership; workspace: Workspace }>
 // lib/db
 getDb(): SupabaseClient<Database>
 // lib/google/client.ts
 getGoogleClient(workspaceId: string): Promise<OAuth2Client>   // admin's stored token
 ```
+
+How to use them:
+- Start every page, server action and route handler with `const { user, membership, workspace } = await requireMembership()`. With no argument it uses the signed-in officer's current club; it redirects to sign-in or setup by itself.
+- `getDb()` uses the service-role key and **bypasses RLS** (the browser can read nothing). So filter every query by `workspace.id` and never query from client components.
+- Row types: `import type { Task, Event, User, Membership, Tables } from '@/lib/db'` (e.g. `Tables<'polls'>`). Schema: `supabase/migrations/`.
+- `getGoogleClient` throws `GoogleNotConnectedError` when the admin hasn't connected Google or Google revoked the token; every page then shows a reconnect banner. Scopes are `calendar` and `drive.file`: Forms and Sheets the app creates work under `drive.file`. If a Google call fails with a scope error, tell Kaung.
+- The shared drive ID is `workspace.shared_drive_id` (create files with `parents: [id]` and `supportsAllDrives: true`); the club calendar is `workspace.calendar_id`.
+- The bell: `components/notifications/Bell.tsx` exports `NotificationBell`, which `app/layout.tsx` renders on every page.
 
 Tasks and notifications (Jackson), used by Jun and Dom:
 
