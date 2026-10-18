@@ -25,7 +25,7 @@
 
 | File | Action | Responsibility |
 | --- | --- | --- |
-| `supabase/migrations/20261018000000_task_assignee_completion.sql` | create | `task_assignees.completed_at`, drop `memberships.last_emailed_on` |
+| `supabase/migrations/20261017120000_task_assignee_completion.sql` | create | `task_assignees.completed_at`, drop `memberships.last_emailed_on` |
 | `lib/db/types.ts` | modify | match the migration |
 | `lib/tasks/rules.ts`, `lib/tasks/rules.test.mjs` | create | derived status, permission, overdue, Pacific format, grouping |
 | `lib/tasks/index.ts` | rewrite | all task DB access |
@@ -50,7 +50,7 @@
 ### Task 1: Schema
 
 **Files:**
-- Create: `supabase/migrations/20261018000000_task_assignee_completion.sql`
+- Create: `supabase/migrations/20261017120000_task_assignee_completion.sql`
 - Modify: `lib/db/types.ts` (memberships Row/Insert/Update lines 175, 186, 197; task_assignees Row/Insert/Update)
 
 **Interfaces:**
@@ -73,7 +73,7 @@ Delete the three `last_emailed_on` lines in `memberships` (Row `last_emailed_on:
 - [ ] **Step 3: Commit**
 
 ```bash
-git add supabase/migrations/20261018000000_task_assignee_completion.sql lib/db/types.ts
+git add supabase/migrations/20261017120000_task_assignee_completion.sql lib/db/types.ts
 git commit -m "feat(db): per-assignee task completion, drop last_emailed_on"
 ```
 
