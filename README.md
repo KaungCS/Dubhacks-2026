@@ -1,4 +1,4 @@
-# Club Ops
+# My RSO
 
 One workspace where a club's officers plan events, track tasks and make decisions, on top of Google Drive, Calendar, Forms and Sheets.
 
