@@ -20,11 +20,6 @@ export type TemplateEditorValues = {
 type Props = {
   initial: TemplateEditorValues;
   submitLabel: string;
-  /**
-   * When true, show editable Google source-link fields for slides/sheet/form.
-   * Pass true for any member who can edit templates (admin + officer on main).
-   */
-  canSetSources?: boolean;
   onSubmit: (values: TemplateEditorValues) => Promise<void>;
 };
 
@@ -42,7 +37,6 @@ function configsToState(configs: FileTypeConfig[]) {
 export function TemplateEditor({
   initial,
   submitLabel,
-  canSetSources = false,
   onSubmit,
 }: Props) {
   const initialState = configsToState(initial.fileTypeConfigs);
@@ -212,9 +206,10 @@ export function TemplateEditor({
             Duplicate from Google link
           </h2>
           <p className="text-sm text-neutral-600">
-            {canSetSources
-              ? "Paste a Google Form, Slides, or Sheet link (or file id) for each type you enable. Creating an event copies that file into the event Drive folder. Leave blank to create a new blank file. Drive folder (above) has no link field — it is created fresh each time."
-              : "Google source links are configured for this template when set. You can still toggle which file types to create."}
+            Paste a Google Form, Slides, or Sheet link (or file id) for each type
+            you enable. Creating an event copies that file into the event Drive
+            folder. Leave blank to create a new blank file. Drive folder (above)
+            has no link field — it is created fresh each time.
           </p>
         </div>
 
@@ -222,9 +217,6 @@ export function TemplateEditor({
           {duplicatable.map(({ key, label, sourceHint }) => {
             const checked = fileTypes.has(key);
             const sourceValue = sources[key] ?? "";
-            // Always show the paste field for duplicatable types when the editor
-            // may set sources — do not hide behind role === "admin" alone.
-            const showLinkField = canSetSources;
             return (
               <li key={key} className="space-y-2 border border-neutral-200 p-3">
                 <div className="flex items-center gap-2">
@@ -240,43 +232,33 @@ export function TemplateEditor({
                   </label>
                 </div>
 
-                {showLinkField ? (
-                  <div className="space-y-1">
-                    <label
-                      className="block text-sm text-neutral-700"
-                      htmlFor={`ft-src-${key}`}
-                    >
-                      {sourceHint ?? "Google file link or id to duplicate"}
-                    </label>
-                    <Input
-                      id={`ft-src-${key}`}
-                      value={sourceValue}
-                      onChange={(e) => setSource(key, e.target.value)}
-                      placeholder="https://docs.google.com/…"
-                      autoComplete="off"
-                      disabled={!checked}
-                      aria-disabled={!checked}
-                    />
-                    {!checked ? (
-                      <p className="text-xs text-neutral-500">
-                        Check {label} above to use this link when creating events.
-                      </p>
-                    ) : (
-                      <p className="text-xs text-neutral-500">
-                        Use the edit/open link from Drive (not forms.gle or a form
-                        response URL).
-                      </p>
-                    )}
-                  </div>
-                ) : checked && sourceValue.trim() ? (
-                  <p className="text-xs text-neutral-500">
-                    Will duplicate from a configured Google file.
-                  </p>
-                ) : checked ? (
-                  <p className="text-xs text-neutral-500">
-                    No Google source set — a new blank file is created.
-                  </p>
-                ) : null}
+                <div className="space-y-1">
+                  <label
+                    className="block text-sm text-neutral-700"
+                    htmlFor={`ft-src-${key}`}
+                  >
+                    {sourceHint ?? "Google file link or id to duplicate"}
+                  </label>
+                  <Input
+                    id={`ft-src-${key}`}
+                    value={sourceValue}
+                    onChange={(e) => setSource(key, e.target.value)}
+                    placeholder="https://docs.google.com/…"
+                    autoComplete="off"
+                    disabled={!checked}
+                    aria-disabled={!checked}
+                  />
+                  {!checked ? (
+                    <p className="text-xs text-neutral-500">
+                      Check {label} above to use this link when creating events.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-neutral-500">
+                      Use the edit/open link from Drive (not forms.gle or a form
+                      response URL).
+                    </p>
+                  )}
+                </div>
               </li>
             );
           })}

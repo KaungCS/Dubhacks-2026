@@ -6,7 +6,6 @@ import { createTemplate, updateTemplate } from "@/lib/events";
 import {
   DUPLICATABLE_FILE_TYPES,
   FILE_TYPE_EXPECT_KIND,
-  canSetTemplateGoogleSources,
   type FileTypeConfig,
   type TemplateTaskItem,
 } from "@/lib/events/types";
@@ -109,21 +108,12 @@ export async function actionCreateTemplate(form: {
   taskItems: TemplateTaskItem[];
   fileTypeConfigs: FileTypeConfig[];
 }) {
-  const { workspace, membership } = await requireMembership();
-
-  let fileTypeConfigs = form.fileTypeConfigs.map((c) => ({
-    key: c.key,
-    sourceFileId: null as string | null,
-    sourceUrl: null as string | null,
-  }));
-
-  // Admins and officers (anyone who can edit templates on main) may set sources.
-  if (canSetTemplateGoogleSources(membership.role)) {
-    fileTypeConfigs = await resolveFileTypeSources(
-      workspace.id,
-      form.fileTypeConfigs,
-    );
-  }
+  // Any club member who can open the template editor may set Google sources.
+  const { workspace } = await requireMembership();
+  const fileTypeConfigs = await resolveFileTypeSources(
+    workspace.id,
+    form.fileTypeConfigs,
+  );
 
   const template = await createTemplate({
     workspaceId: workspace.id,
@@ -140,34 +130,11 @@ export async function actionUpdateTemplate(form: {
   taskItems: TemplateTaskItem[];
   fileTypeConfigs: FileTypeConfig[];
 }) {
-  const { workspace, membership } = await requireMembership();
-
-  let fileTypeConfigs: FileTypeConfig[];
-
-  if (canSetTemplateGoogleSources(membership.role)) {
-    fileTypeConfigs = await resolveFileTypeSources(
-      workspace.id,
-      form.fileTypeConfigs,
-    );
-  } else {
-    // Preserve existing sources if a future role can edit templates but not sources.
-    const { getTemplate } = await import("@/lib/events");
-    const existing = await getTemplate(form.templateId);
-    if (existing.workspace_id !== workspace.id) {
-      throw new Error("Template not found in this club");
-    }
-    const byKey = new Map(
-      existing.file_type_configs.map((c) => [c.key, c] as const),
-    );
-    fileTypeConfigs = form.fileTypeConfigs.map((c) => {
-      const prev = byKey.get(c.key);
-      return {
-        key: c.key,
-        sourceFileId: prev?.sourceFileId ?? null,
-        sourceUrl: prev?.sourceUrl ?? null,
-      };
-    });
-  }
+  const { workspace } = await requireMembership();
+  const fileTypeConfigs = await resolveFileTypeSources(
+    workspace.id,
+    form.fileTypeConfigs,
+  );
 
   await updateTemplate(form.templateId, {
     name: form.name,
@@ -182,10 +149,7 @@ export async function actionValidateGoogleSource(form: {
   fileTypeKey: FileTypeConfig["key"];
   source: string;
 }) {
-  const { workspace, membership } = await requireMembership();
-  if (!canSetTemplateGoogleSources(membership.role)) {
-    throw new Error("You do not have permission to set Google source links");
-  }
+  const { workspace } = await requireMembership();
   if (!DUPLICATABLE_FILE_TYPES.includes(form.fileTypeKey)) {
     throw new Error("This file type does not support duplicate-from");
   }

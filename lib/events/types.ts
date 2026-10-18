@@ -239,15 +239,6 @@ export const DUPLICATABLE_FILE_TYPES: FileTypeKey[] = [
   "rsvp_form",
 ];
 
-/**
- * Who may paste Google source links on the template editor.
- * No templates.edit permission helper exists on main yet — allow every
- * club member role that can reach the editor (admin + officer).
- */
-export function canSetTemplateGoogleSources(role: string): boolean {
-  return role === "admin" || role === "officer";
-}
-
 export const ALL_FILE_TYPES: {
   key: FileTypeKey;
   label: string;

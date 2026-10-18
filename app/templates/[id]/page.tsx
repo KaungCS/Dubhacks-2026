@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireMembership } from "@/lib/auth";
-import { canSetTemplateGoogleSources, getTemplate } from "@/lib/events";
+import { getTemplate } from "@/lib/events";
 import { TemplateEditor } from "@/components/events/template-editor";
 import { actionUpdateTemplate } from "../actions";
 
@@ -8,8 +8,7 @@ type Params = Promise<{ id: string }>;
 
 export default async function EditTemplatePage({ params }: { params: Params }) {
   const { id } = await params;
-  const { workspace, membership } = await requireMembership();
-  const canSetSources = canSetTemplateGoogleSources(membership.role);
+  const { workspace } = await requireMembership();
 
   let template;
   try {
@@ -67,7 +66,6 @@ export default async function EditTemplatePage({ params }: { params: Params }) {
           taskItems: template.task_items,
           fileTypeConfigs: template.file_type_configs,
         }}
-        canSetSources={canSetSources}
         submitLabel="Save template"
         onSubmit={save}
       />

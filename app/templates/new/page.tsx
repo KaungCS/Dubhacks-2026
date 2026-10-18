@@ -1,12 +1,10 @@
 import Link from "next/link";
 import { requireMembership } from "@/lib/auth";
-import { canSetTemplateGoogleSources } from "@/lib/events";
 import { TemplateEditor } from "@/components/events/template-editor";
 import { actionCreateTemplate } from "../actions";
 
 export default async function NewTemplatePage() {
-  const { membership } = await requireMembership();
-  const canSetSources = canSetTemplateGoogleSources(membership.role);
+  await requireMembership();
 
   async function save(values: {
     name: string;
@@ -45,7 +43,6 @@ export default async function NewTemplatePage() {
             { key: "signin_sheet", sourceFileId: null, sourceUrl: null },
           ],
         }}
-        canSetSources={canSetSources}
         submitLabel="Create template"
         onSubmit={save}
       />

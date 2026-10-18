@@ -18,7 +18,6 @@ export {
   buildFileTypeConfigs,
   sourceForFileType,
   copySourceRef,
-  canSetTemplateGoogleSources,
   ALL_FILE_TYPES,
   DUPLICATABLE_FILE_TYPES,
   FILE_TYPE_EXPECT_KIND,
