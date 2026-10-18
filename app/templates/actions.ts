@@ -6,6 +6,7 @@ import { createTemplate, deleteTemplate, updateTemplate } from "@/lib/events";
 import {
   DUPLICATABLE_FILE_TYPES,
   FILE_TYPE_EXPECT_KIND,
+  fileTypeLabel,
   type FileTypeConfig,
   type TemplateTaskItem,
 } from "@/lib/events/types";
@@ -47,7 +48,7 @@ async function resolveFileTypeSources(
     try {
       fileId = parseGoogleFileId(raw);
     } catch (err) {
-      throw new Error(`${labelFor(config.key)}: ${googleSourceErrorMessage(err)}`);
+      throw new Error(`${fileTypeLabel(config.key)}: ${googleSourceErrorMessage(err)}`);
     }
 
     const expectKind = FILE_TYPE_EXPECT_KIND[config.key];
@@ -64,7 +65,7 @@ async function resolveFileTypeSources(
         sourceUrl: looksLikeUrl(raw) ? raw : meta.webViewLink,
       });
     } catch (err) {
-      throw new Error(`${labelFor(config.key)}: ${googleSourceErrorMessage(err)}`);
+      throw new Error(`${fileTypeLabel(config.key)}: ${googleSourceErrorMessage(err)}`);
     }
   }
 
@@ -73,19 +74,6 @@ async function resolveFileTypeSources(
 
 function looksLikeUrl(s: string): boolean {
   return /^https?:\/\//i.test(s.trim());
-}
-
-function labelFor(key: FileTypeConfig["key"]): string {
-  switch (key) {
-    case "rsvp_form":
-      return "RSVP form";
-    case "slides":
-      return "Slides";
-    case "signin_sheet":
-      return "Sign-in sheet";
-    default:
-      return key;
-  }
 }
 
 function expectKindLabel(kind: string): string {

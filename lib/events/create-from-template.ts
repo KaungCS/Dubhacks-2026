@@ -6,8 +6,8 @@ import { createSignInSheet } from "@/lib/google/sheets";
 import { syncEventToGoogleCalendar } from "@/lib/google/calendar";
 import {
   copyGoogleFile,
+  createEventFile,
   createEventFolder,
-  createEventSlides,
 } from "@/lib/google/drive";
 import { getTemplate } from "./templates";
 import { getEvent } from "./get-event";
@@ -25,7 +25,7 @@ function subtractDays(date: Date, days: number): Date {
 
 /**
  * Create an event from a template:
- * event row → tasks → Drive folder/slides → Dom form/sheet → Google Calendar.
+ * event row → tasks → Drive folder/slides/notes → Dom form/sheet → Google Calendar.
  * When a file type has a Google source link/id, copies that file into the event folder
  * via Drive files.copy instead of creating a blank file / calling Dom stubs.
  */
@@ -76,27 +76,25 @@ export async function createEventFromTemplate(
     event = { ...event, drive_folder_id: folder.folderId };
   }
 
-  if (fileTypes.has("slides")) {
-    const source = copySourceRef(configs, "slides");
-    if (source) {
-      // Must Drive-copy when a template source link/id is set (never create blank).
-      const copied = await copyGoogleFile(input.workspaceId, {
-        source,
-        name: `${input.title} — Slides`,
-        parentFolderId: event.drive_folder_id,
-        expectKind: FILE_TYPE_EXPECT_KIND.slides,
-      });
-      updates.slides_id = copied.fileId;
-      event = { ...event, slides_id: copied.fileId };
-    } else {
-      const slides = await createEventSlides(
-        input.workspaceId,
-        input.title,
-        event.drive_folder_id,
-      );
-      updates.slides_id = slides.slidesId;
-      event = { ...event, slides_id: slides.slidesId };
-    }
+  // Plain Drive files: copy the template's source when set (never blank), else create blank.
+  for (const [key, column, suffix] of [
+    ["slides", "slides_id", "Slides"],
+    ["notes", "notes_id", "Notes"],
+  ] as const) {
+    if (!fileTypes.has(key)) continue;
+    const source = copySourceRef(configs, key);
+    const name = `${input.title} — ${suffix}`;
+    const kind = FILE_TYPE_EXPECT_KIND[key]!;
+    const file = source
+      ? await copyGoogleFile(input.workspaceId, {
+          source,
+          name,
+          parentFolderId: event.drive_folder_id,
+          expectKind: kind,
+        })
+      : await createEventFile(input.workspaceId, name, kind, event.drive_folder_id);
+    updates[column] = file.fileId;
+    event = { ...event, [column]: file.fileId };
   }
 
   if (fileTypes.has("rsvp_form")) {

@@ -242,6 +242,27 @@ export async function copyGoogleFile(
   }
 }
 
+/** Prefix a Drive file or folder name with "(Deleted) "; no-op if it already has it. */
+export async function markDriveFileDeleted(
+  workspaceId: string,
+  fileId: string,
+): Promise<void> {
+  const auth = await getGoogleClient(workspaceId);
+  const drive = google.drive({ version: "v3", auth });
+  const { data } = await drive.files.get({
+    fileId,
+    fields: "name",
+    supportsAllDrives: true,
+  });
+  const name = data.name ?? "";
+  if (name.startsWith("(Deleted)")) return;
+  await drive.files.update({
+    fileId,
+    requestBody: { name: `(Deleted) ${name}` },
+    supportsAllDrives: true,
+  });
+}
+
 /** Create an event folder under the workspace shared drive. */
 export async function createEventFolder(
   workspaceId: string,
@@ -267,12 +288,13 @@ export async function createEventFolder(
   return { folderId, url: created.data.webViewLink ?? null };
 }
 
-/** Create a blank Google Slides deck in the event folder (or shared drive root). */
-export async function createEventSlides(
+/** Create a blank Google file (Slides, Doc, …) in the event folder (or shared drive root). */
+export async function createEventFile(
   workspaceId: string,
-  eventTitle: string,
+  name: string,
+  kind: CopyableGoogleKind,
   parentFolderId?: string | null,
-): Promise<{ slidesId: string; url: string | null }> {
+): Promise<{ fileId: string; url: string | null }> {
   const auth = await getGoogleClient(workspaceId);
   const drive = google.drive({ version: "v3", auth });
   const sharedDriveId = await getSharedDriveId(workspaceId);
@@ -280,16 +302,16 @@ export async function createEventSlides(
 
   const created = await drive.files.create({
     requestBody: {
-      name: `${eventTitle} — Slides`,
-      mimeType: "application/vnd.google-apps.presentation",
+      name,
+      mimeType: COPYABLE_MIME_TYPES[kind],
       parents: [parent],
     },
     fields: "id, webViewLink",
     supportsAllDrives: true,
   });
 
-  const slidesId = created.data.id;
-  if (!slidesId) throw new Error("Google Drive did not return a slides id");
+  const fileId = created.data.id;
+  if (!fileId) throw new Error(`Google Drive did not return a ${KIND_LABEL[kind]} id`);
 
-  return { slidesId, url: created.data.webViewLink ?? null };
+  return { fileId, url: created.data.webViewLink ?? null };
 }

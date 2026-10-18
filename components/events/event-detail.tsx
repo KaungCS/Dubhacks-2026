@@ -34,6 +34,7 @@ export function EventDetail({ event, attendance, tasks }: Props) {
     { label: "RSVP form", url: links.rsvpFormUrl },
     { label: "Sign-in sheet", url: links.signinSheetUrl },
     { label: "Slides", url: links.slidesUrl },
+    { label: "Notes", url: links.notesUrl },
   ];
   const sorted = [...tasks].sort((a, b) => (a.due_at ?? "9999").localeCompare(b.due_at ?? "9999"));
   const done = tasks.filter((t) => t.status === "done").length;
@@ -68,7 +69,7 @@ export function EventDetail({ event, attendance, tasks }: Props) {
           </Link>
           <form action={actionDeleteEvent}>
             <input type="hidden" name="id" value={event.id} />
-            <ConfirmButton message={`Delete "${event.title}" and its tasks? It is removed from the club calendar; its Drive files stay.`}>
+            <ConfirmButton message={`Delete "${event.title}" and its tasks? It is removed from the club calendar; its Drive folder stays, renamed "(Deleted) …".`}>
               Delete
             </ConfirmButton>
           </form>

@@ -81,6 +81,7 @@ export const FILE_COLUMNS = [
   { key: 'rsvp_form', label: 'RSVP form' },
   { key: 'signin_sheet', label: 'Sign-in sheet' },
   { key: 'slides', label: 'Slides' },
+  { key: 'notes', label: 'Notes' },
 ] as const
 
 export function FilesTab({ rows, driveUrl }: { rows: FileRow[]; driveUrl: string | null }) {

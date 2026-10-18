@@ -1,8 +1,12 @@
 import { getDb } from "@/lib/db";
 import { removeEventFromGoogleCalendar } from "@/lib/google/calendar";
+import { markDriveFileDeleted } from "@/lib/google/drive";
 import { getEvent } from "./get-event";
 
-/** Deletes the event and, by on delete cascade, its tasks and attendees. Its Drive files stay in Drive. */
+/**
+ * Deletes the event and, by on delete cascade, its tasks and attendees.
+ * Its Drive folder stays in Drive, renamed "(Deleted) <name>".
+ */
 export async function deleteEvent(workspaceId: string, eventId: string): Promise<void> {
   const event = await getEvent(eventId);
   if (event.workspace_id !== workspaceId) throw new Error("Event not found in this club");
@@ -12,6 +16,15 @@ export async function deleteEvent(workspaceId: string, eventId: string): Promise
   } catch (err) {
     // ponytail: Google not connected or the entry is already gone; delete anyway and accept a possible stale calendar entry.
     console.error("removeEventFromGoogleCalendar failed", err);
+  }
+
+  if (event.drive_folder_id) {
+    try {
+      await markDriveFileDeleted(workspaceId, event.drive_folder_id);
+    } catch (err) {
+      // Same as calendar: folder already gone or Google disconnected shouldn't block the delete.
+      console.error("markDriveFileDeleted failed", err);
+    }
   }
 
   const { error } = await getDb()

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Page, buttonClass } from "@/components/ui";
 import { requireMembership } from "@/lib/auth";
 import { listTemplates } from "@/lib/events";
-import { sourceForFileType } from "@/lib/events/types";
+import { DUPLICATABLE_FILE_TYPES, fileTypeLabel, sourceForFileType } from "@/lib/events/types";
 
 export default async function TemplatesPage() {
   const { workspace } = await requireMembership();
@@ -27,7 +27,7 @@ export default async function TemplatesPage() {
       <p className="text-sm text-neutral-600">
         Open a template (or create one) and use{" "}
         <span className="font-medium text-black">Duplicate from Google link</span>{" "}
-        to paste Form / Slides / Sheet links. Create Event then Drive-copies those
+        to paste Form / Slides / Sheet / Doc links. Create Event then Drive-copies those
         files.
       </p>
 
@@ -38,9 +38,9 @@ export default async function TemplatesPage() {
       ) : (
         <ul className="divide-y divide-neutral-100 border border-neutral-200">
           {templates.map((template) => {
-            const googleSources = (
-              ["rsvp_form", "slides", "signin_sheet"] as const
-            ).filter((key) => sourceForFileType(template.file_type_configs, key));
+            const googleSources = DUPLICATABLE_FILE_TYPES.filter((key) =>
+              sourceForFileType(template.file_type_configs, key),
+            );
             return (
               <li key={template.id}>
                 <Link
@@ -52,15 +52,7 @@ export default async function TemplatesPage() {
                     {googleSources.length > 0 ? (
                       <span className="mt-0.5 block text-xs text-neutral-500">
                         Google link set for{" "}
-                        {googleSources
-                          .map((k) =>
-                            k === "rsvp_form"
-                              ? "RSVP form"
-                              : k === "slides"
-                                ? "Slides"
-                                : "Sign-in sheet",
-                          )
-                          .join(", ")}
+                        {googleSources.map(fileTypeLabel).join(", ")}
                       </span>
                     ) : null}
                   </span>

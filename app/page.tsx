@@ -151,10 +151,10 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
           driveUrl={workspace.shared_drive_id ? `https://drive.google.com/drive/folders/${workspace.shared_drive_id}` : null}
           rows={upcoming.map((e) => {
             const links = eventLinks(e);
-            const urls = { folder: links.driveFolderUrl, rsvp_form: links.rsvpFormUrl, signin_sheet: links.signinSheetUrl, slides: links.slidesUrl };
+            const urls = { folder: links.driveFolderUrl, rsvp_form: links.rsvpFormUrl, signin_sheet: links.signinSheetUrl, slides: links.slidesUrl, notes: links.notesUrl };
             const template = templates.find((t) => t.id === e.template_id);
             const states = fileStates(
-              { folder: !!urls.folder, rsvp_form: !!urls.rsvp_form, signin_sheet: !!urls.signin_sheet, slides: !!urls.slides },
+              { folder: !!urls.folder, rsvp_form: !!urls.rsvp_form, signin_sheet: !!urls.signin_sheet, slides: !!urls.slides, notes: !!urls.notes },
               template ? template.file_types : ALL_FILES,
             );
             return { id: e.id, title: e.title, date: shortDate(e.starts_at), files: ALL_FILES.map((key) => ({ key, state: states[key], url: urls[key] })) };
