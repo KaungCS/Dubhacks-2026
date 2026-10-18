@@ -36,24 +36,23 @@ export async function switchWorkspace(formData: FormData) {
   redirect('/')
 }
 
-// Accepts a shared drive URL or ID. Before saving, checks that drive.file can create a file in it
-// (the spec's open risk) by creating and trashing a test folder.
+// Accepts a link or ID for a shared drive or a regular folder: the club's root for Drive files.
+// ponytail: a My Drive folder means the admin owns the files (personal Gmail can't make shared drives);
+// fine for the pilot, use a Workspace (e.g. UW) shared drive when admins hand off.
 export async function saveSharedDrive(formData: FormData) {
   const { workspace } = await requireAdmin()
   const driveId = String(formData.get('drive') ?? '').trim().split('?')[0].split('/').filter(Boolean).pop()
   if (!driveId) redirect('/settings')
+  let error = ''
   try {
     const drive = google.drive({ version: 'v3', auth: await getGoogleClient(workspace.id) })
-    const { data } = await drive.files.create({
-      supportsAllDrives: true,
-      fields: 'id',
-      requestBody: { name: 'Club Ops access check', mimeType: 'application/vnd.google-apps.folder', parents: [driveId] },
-    })
-    await drive.files.update({ fileId: data.id!, supportsAllDrives: true, requestBody: { trashed: true } })
+    const { data } = await drive.files.get({ fileId: driveId, supportsAllDrives: true, fields: 'mimeType' })
+    if (data.mimeType !== 'application/vnd.google-apps.folder') error = 'not-folder'
   } catch (e) {
     console.error('shared drive check failed', e)
-    redirect(`/settings?error=${e instanceof GoogleNotConnectedError ? 'google' : 'drive'}`)
+    error = e instanceof GoogleNotConnectedError ? 'google' : 'drive'
   }
+  if (error) redirect(`/settings?error=${error}`)
   await getDb().from('workspaces').update({ shared_drive_id: driveId }).eq('id', workspace.id)
   await shareWithAllOfficers(workspace.id, workspace.admin_user_id, { driveId })
   redirect('/settings')

@@ -24,7 +24,7 @@ First push by 10pm tonight; finished by 10am tomorrow. Every component is built 
 | App | Next.js on Vercel | Fast to ship; server routes hold the Google token |
 | Sign-in | Supabase Auth, Google provider | Sessions with almost no code |
 | Data | Postgres (Supabase) | Tasks, polls, metrics, members; Google holds only documents |
-| Files | Shared drive as the root; `drive.file` | Shared drive owns the files, so no ownership transfer |
+| Files | Shared drive as the root; `drive` scope | Shared drive owns the files, so no ownership transfer |
 | Calendar | Calendar scope, admin's token | One club calendar shared with officers |
 | Forms and Sheets | APIs on app-created files | RSVP form and sign-in sheet per event |
 | Email | Resend, verified club domain | Only two email types (below) |
@@ -102,7 +102,7 @@ List any unfinished piece from the build order here.
 
 ## Open risks
 
-- [ ] Verify `drive.file` works against a shared drive the app didn't create. If it doesn't, the shared drive must be created by the app or a broader scope is needed.
+- [x] Verify `drive.file` works against a shared drive the app didn't create. Result: it can create files there but can't read the drive or manage its members, so officer sharing failed. Switched to the full `drive` scope (restricted: fine for test users, needs Google's security review to go public).
 - [ ] Calendar is a sensitive scope: fine for 100 test users, needs Google verification beyond the pilot.
 - [ ] The cached 5-minute refresh means RSVP-target badges can lag; acceptable for the pilot.
 - [ ] Once-a-day email silences later same-day assignments. "New since last visit" in the app is the safety net; revisit if officers miss tasks.

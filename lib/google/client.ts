@@ -2,11 +2,13 @@ import { google, type Auth } from 'googleapis'
 import { getDb } from '@/lib/db'
 import { decrypt } from '@/lib/auth/crypto'
 
-// drive.file covers Forms and Sheets the app creates, so no separate Forms/Sheets scopes.
+// Full drive (not drive.file): drive.file can create files in the shared drive but can't read it or
+// manage its members, so officer sharing failed. drive also covers Forms and Sheets.
+// ponytail: drive is a restricted scope; fine for test users, needs Google's security review to go public.
 // If a Google call returns 403 for scopes, add the scope here and have an admin reconnect.
 export const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/calendar',
-  'https://www.googleapis.com/auth/drive.file',
+  'https://www.googleapis.com/auth/drive',
 ]
 
 export class GoogleNotConnectedError extends Error {

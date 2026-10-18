@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Button, buttonClass, Card, Input, Page, Select } from '@/components/ui'
 import { getContext } from '@/lib/auth'
@@ -9,7 +8,8 @@ import { createWorkspace, removeMember, saveSharedDrive, switchWorkspace, update
 const errors: Record<string, string> = {
   google: 'Connecting Google failed or was cancelled. Try again.',
   scopes: 'Google access was only partly granted. Reconnect and leave every permission checked.',
-  drive: "Couldn't create a file in that shared drive. Check the link and that you manage the drive. The server log has Google's error.",
+  drive: "Couldn't open that drive or folder. Check the link and that you have access to it. If you connected Google before the switch to full Drive access, reconnect first.",
+  'not-folder': "That link isn't a folder. Paste a link to a shared drive or a Drive folder.",
 }
 
 export default async function SettingsPage({ searchParams }: PageProps<'/settings'>) {
@@ -79,17 +79,18 @@ export default async function SettingsPage({ searchParams }: PageProps<'/setting
             <p className="text-sm">
               {workspace.google_connected ? 'Connected. Calendar, Drive, Forms and Sheets run as the admin who connected.' : 'Not connected.'}
             </p>
-            <Link href="/settings/google" className={buttonClass}>
+            {/* Plain <a>: this route redirects to Google, which client-side navigation can't follow. */}
+            <a href="/settings/google" className={buttonClass}>
               {workspace.google_connected ? 'Reconnect' : 'Connect Google'}
-            </Link>
+            </a>
           </div>
           <p className="text-sm">Club calendar: {workspace.calendar_id ? 'created and shared with officers' : 'created when you connect'}</p>
           <form action={saveSharedDrive} className="flex flex-wrap items-center gap-2">
             <Input
               name="drive"
               defaultValue={workspace.shared_drive_id ?? ''}
-              placeholder="Shared drive link or ID"
-              aria-label="Shared drive link or ID"
+              placeholder="Shared drive or folder link"
+              aria-label="Shared drive or folder link"
               className="min-w-72 flex-1"
               required
             />
