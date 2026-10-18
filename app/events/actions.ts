@@ -5,16 +5,15 @@ import { requireMembership } from "@/lib/auth";
 import { createEventFromTemplate } from "@/lib/events";
 
 export async function actionCreateEventFromTemplate(form: {
-  workspaceId: string;
   templateId: string;
   title: string;
   startsAt: string;
   endsAt: string;
   location: string;
 }) {
-  const { user } = await requireMembership(form.workspaceId);
+  const { user, workspace } = await requireMembership();
   const event = await createEventFromTemplate({
-    workspaceId: form.workspaceId,
+    workspaceId: workspace.id,
     templateId: form.templateId,
     title: form.title,
     startsAt: new Date(form.startsAt),
@@ -22,5 +21,5 @@ export async function actionCreateEventFromTemplate(form: {
     location: form.location || undefined,
     createdByUserId: user.id,
   });
-  redirect(`/events/${event.id}?workspaceId=${form.workspaceId}`);
+  redirect(`/events/${event.id}`);
 }

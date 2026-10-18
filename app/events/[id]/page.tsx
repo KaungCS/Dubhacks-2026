@@ -3,36 +3,36 @@ import { getEvent } from "@/lib/events";
 import { getEventAttendance } from "@/lib/attendance";
 import { listTasksForCalendar } from "@/lib/tasks";
 import { EventDetail } from "@/components/events/event-detail";
+import type { Task } from "@/lib/db";
 
 type Params = Promise<{ id: string }>;
-type SearchParams = Promise<{ workspaceId?: string }>;
 
-export default async function EventDetailPage({
-  params,
-  searchParams,
-}: {
-  params: Params;
-  searchParams: SearchParams;
-}) {
+export default async function EventDetailPage({ params }: { params: Params }) {
   const { id } = await params;
-  const { workspaceId: workspaceParam } = await searchParams;
+  const { workspace } = await requireMembership();
 
   let event;
   try {
     event = await getEvent(id);
   } catch (err) {
     return (
-      <main className="mx-auto max-w-2xl px-6 py-10">
-        <h1 className="text-2xl font-medium text-black">Event</h1>
-        <p className="mt-2 text-sm text-red-600">
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold">Event</h1>
+        <p className="text-sm text-red-600">
           {err instanceof Error ? err.message : "Event not found"}
         </p>
-      </main>
+      </div>
     );
   }
 
-  const workspaceId = workspaceParam || event.workspaceId;
-  await requireMembership(workspaceId);
+  if (event.workspace_id !== workspace.id) {
+    return (
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold">Event</h1>
+        <p className="text-sm text-red-600">Event not found in this club</p>
+      </div>
+    );
+  }
 
   let attendance: { rsvps: number; attended: number } | null = null;
   try {
@@ -41,33 +41,17 @@ export default async function EventDetailPage({
     attendance = null;
   }
 
-  let tasks: Array<{ id: string; title: string; dueAt: string; status?: string }> = [];
+  let tasks: Task[] = [];
   try {
-    const from = new Date(event.startsAt);
+    const from = new Date(event.starts_at);
     from.setUTCMonth(from.getUTCMonth() - 3);
-    const to = new Date(event.endsAt);
+    const to = new Date(event.ends_at ?? event.starts_at);
     to.setUTCMonth(to.getUTCMonth() + 1);
-    const rows = await listTasksForCalendar(workspaceId, from, to);
-    tasks = (rows as unknown as Record<string, unknown>[])
-      .filter((row) => String(row.eventId ?? row.event_id ?? "") === event.id)
-      .map((row) => ({
-        id: String(row.id),
-        title: String(row.title ?? ""),
-        dueAt: String(row.dueAt ?? row.due_at ?? ""),
-        status: row.status ? String(row.status) : undefined,
-      }));
+    const rows = await listTasksForCalendar(workspace.id, from, to);
+    tasks = rows.filter((row) => row.event_id === event.id);
   } catch {
     tasks = [];
   }
 
-  return (
-    <main className="px-6 py-10">
-      <EventDetail
-        event={event}
-        attendance={attendance}
-        tasks={tasks}
-        workspaceId={workspaceId}
-      />
-    </main>
-  );
+  return <EventDetail event={event} attendance={attendance} tasks={tasks} />;
 }

@@ -5,34 +5,33 @@ import { TemplateEditor } from "@/components/events/template-editor";
 import { actionUpdateTemplate } from "../actions";
 
 type Params = Promise<{ id: string }>;
-type SearchParams = Promise<{ workspaceId?: string }>;
 
-export default async function EditTemplatePage({
-  params,
-  searchParams,
-}: {
-  params: Params;
-  searchParams: SearchParams;
-}) {
+export default async function EditTemplatePage({ params }: { params: Params }) {
   const { id } = await params;
-  const { workspaceId: workspaceParam } = await searchParams;
+  const { workspace } = await requireMembership();
 
   let template;
   try {
     template = await getTemplate(id);
   } catch (err) {
     return (
-      <main className="mx-auto max-w-xl px-6 py-10">
-        <h1 className="text-2xl font-medium text-black">Template</h1>
-        <p className="mt-2 text-sm text-red-600">
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold">Template</h1>
+        <p className="text-sm text-red-600">
           {err instanceof Error ? err.message : "Template not found"}
         </p>
-      </main>
+      </div>
     );
   }
 
-  const workspaceId = workspaceParam || template.workspaceId;
-  await requireMembership(workspaceId);
+  if (template.workspace_id !== workspace.id) {
+    return (
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold">Template</h1>
+        <p className="text-sm text-red-600">Template not found in this club</p>
+      </div>
+    );
+  }
 
   async function save(values: {
     name: string;
@@ -40,38 +39,31 @@ export default async function EditTemplatePage({
     fileTypes: Parameters<typeof actionUpdateTemplate>[0]["fileTypes"];
   }) {
     "use server";
-    await actionUpdateTemplate({
-      workspaceId,
-      templateId: id,
-      ...values,
-    });
+    await actionUpdateTemplate({ templateId: id, ...values });
   }
 
   return (
-    <main className="space-y-6 px-6 py-10">
+    <div className="space-y-6">
       <div className="mx-auto max-w-xl space-y-2">
         <p className="text-sm text-neutral-500">
-          <Link
-            href={`/templates?workspaceId=${workspaceId}`}
-            className="underline-offset-2 hover:underline"
-          >
+          <Link href="/templates" className="underline-offset-2 hover:underline">
             Templates
           </Link>
           {" / "}
           {template.name}
         </p>
-        <h1 className="text-2xl font-medium text-black">Edit template</h1>
+        <h1 className="text-2xl font-semibold">Edit template</h1>
       </div>
 
       <TemplateEditor
         initial={{
           name: template.name,
-          taskItems: template.taskItems,
-          fileTypes: template.fileTypes,
+          taskItems: template.task_items,
+          fileTypes: template.file_types,
         }}
         submitLabel="Save template"
         onSubmit={save}
       />
-    </main>
+    </div>
   );
 }
