@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Button, Input } from "@/components/ui";
 import {
   ALL_FILE_TYPES,
+  DUPLICATABLE_FILE_TYPES,
+  type FileTypeConfig,
   type FileTypeKey,
   type TemplateTaskItem,
 } from "@/lib/events/types";
@@ -11,24 +13,44 @@ import {
 export type TemplateEditorValues = {
   name: string;
   taskItems: TemplateTaskItem[];
-  fileTypes: FileTypeKey[];
+  fileTypeConfigs: FileTypeConfig[];
 };
 
 type Props = {
   initial: TemplateEditorValues;
   submitLabel: string;
+  /** When true, show Google source-link fields for slides/sheet/form. */
+  canSetSources?: boolean;
   onSubmit: (values: TemplateEditorValues) => Promise<void>;
 };
 
 const EMPTY_TASK: TemplateTaskItem = { title: "", days_before: 7, role: "" };
 
-export function TemplateEditor({ initial, submitLabel, onSubmit }: Props) {
+function configsToState(configs: FileTypeConfig[]) {
+  const keys = new Set<FileTypeKey>(configs.map((c) => c.key));
+  const sources: Partial<Record<FileTypeKey, string>> = {};
+  for (const c of configs) {
+    sources[c.key] = c.sourceUrl || c.sourceFileId || "";
+  }
+  return { keys, sources };
+}
+
+export function TemplateEditor({
+  initial,
+  submitLabel,
+  canSetSources = false,
+  onSubmit,
+}: Props) {
+  const initialState = configsToState(initial.fileTypeConfigs);
   const [name, setName] = useState(initial.name);
   const [taskItems, setTaskItems] = useState<TemplateTaskItem[]>(
     initial.taskItems.length ? initial.taskItems : [{ ...EMPTY_TASK }],
   );
   const [fileTypes, setFileTypes] = useState<Set<FileTypeKey>>(
-    () => new Set(initial.fileTypes),
+    () => initialState.keys,
+  );
+  const [sources, setSources] = useState<Partial<Record<FileTypeKey, string>>>(
+    () => initialState.sources,
   );
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -48,16 +70,29 @@ export function TemplateEditor({ initial, submitLabel, onSubmit }: Props) {
     });
   }
 
+  function setSource(key: FileTypeKey, value: string) {
+    setSources((prev) => ({ ...prev, [key]: value }));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setPending(true);
     try {
       const cleaned = taskItems.filter((t) => t.title.trim().length > 0);
+      const fileTypeConfigs: FileTypeConfig[] = [...fileTypes].map((key) => {
+        const raw = (sources[key] ?? "").trim();
+        const canDuplicate = DUPLICATABLE_FILE_TYPES.includes(key);
+        return {
+          key,
+          sourceFileId: null,
+          sourceUrl: canDuplicate && raw ? raw : null,
+        };
+      });
       await onSubmit({
         name: name.trim(),
         taskItems: cleaned,
-        fileTypes: [...fileTypes],
+        fileTypeConfigs,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
@@ -141,19 +176,57 @@ export function TemplateEditor({ initial, submitLabel, onSubmit }: Props) {
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium text-black">File types</h2>
-        <ul className="space-y-2 text-sm text-neutral-800">
-          {ALL_FILE_TYPES.map(({ key, label }) => (
-            <li key={key} className="flex items-center gap-2">
-              <input
-                id={`ft-${key}`}
-                type="checkbox"
-                checked={fileTypes.has(key)}
-                onChange={(e) => toggleFileType(key, e.target.checked)}
-                className="h-4 w-4 border border-black"
-              />
-              <label htmlFor={`ft-${key}`}>{label}</label>
-            </li>
-          ))}
+        <ul className="space-y-3 text-sm text-neutral-800">
+          {ALL_FILE_TYPES.map(({ key, label, sourceHint }) => {
+            const checked = fileTypes.has(key);
+            const showSource =
+              canSetSources &&
+              checked &&
+              DUPLICATABLE_FILE_TYPES.includes(key);
+            return (
+              <li key={key} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    id={`ft-${key}`}
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) => toggleFileType(key, e.target.checked)}
+                    className="h-4 w-4 border border-black"
+                  />
+                  <label htmlFor={`ft-${key}`}>{label}</label>
+                </div>
+                {showSource ? (
+                  <div className="ml-6 space-y-1">
+                    <label
+                      className="block text-xs text-neutral-500"
+                      htmlFor={`ft-src-${key}`}
+                    >
+                      {sourceHint ?? "Google file link or id to duplicate"}
+                    </label>
+                    <Input
+                      id={`ft-src-${key}`}
+                      value={sources[key] ?? ""}
+                      onChange={(e) => setSource(key, e.target.value)}
+                      placeholder="https://docs.google.com/…"
+                      autoComplete="off"
+                    />
+                    <p className="text-xs text-neutral-500">
+                      Leave blank to create a new blank file. When set, creating an
+                      event copies this Google file into the event Drive folder.
+                    </p>
+                  </div>
+                ) : null}
+                {!canSetSources &&
+                checked &&
+                DUPLICATABLE_FILE_TYPES.includes(key) &&
+                (sources[key] ?? "").trim() ? (
+                  <p className="ml-6 text-xs text-neutral-500">
+                    Duplicates from a configured Google file (admin-only to change).
+                  </p>
+                ) : null}
+              </li>
+            );
+          })}
         </ul>
       </section>
 

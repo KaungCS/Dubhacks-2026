@@ -8,7 +8,8 @@ type Params = Promise<{ id: string }>;
 
 export default async function EditTemplatePage({ params }: { params: Params }) {
   const { id } = await params;
-  const { workspace } = await requireMembership();
+  const { workspace, membership } = await requireMembership();
+  const isAdmin = membership.role === "admin";
 
   let template;
   try {
@@ -36,7 +37,7 @@ export default async function EditTemplatePage({ params }: { params: Params }) {
   async function save(values: {
     name: string;
     taskItems: Parameters<typeof actionUpdateTemplate>[0]["taskItems"];
-    fileTypes: Parameters<typeof actionUpdateTemplate>[0]["fileTypes"];
+    fileTypeConfigs: Parameters<typeof actionUpdateTemplate>[0]["fileTypeConfigs"];
   }) {
     "use server";
     await actionUpdateTemplate({ templateId: id, ...values });
@@ -53,14 +54,21 @@ export default async function EditTemplatePage({ params }: { params: Params }) {
           {template.name}
         </p>
         <h1 className="text-2xl font-semibold">Edit template</h1>
+        {isAdmin ? (
+          <p className="text-sm text-neutral-600">
+            For Slides, RSVP form, or sign-in sheet, paste a Google file link to
+            duplicate when creating events.
+          </p>
+        ) : null}
       </div>
 
       <TemplateEditor
         initial={{
           name: template.name,
           taskItems: template.task_items,
-          fileTypes: template.file_types,
+          fileTypeConfigs: template.file_type_configs,
         }}
+        canSetSources={isAdmin}
         submitLabel="Save template"
         onSubmit={save}
       />

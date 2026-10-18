@@ -1,9 +1,9 @@
 import { requireMembership } from "@/lib/auth";
 import { getEvent } from "@/lib/events";
 import { getEventAttendance } from "@/lib/attendance";
+import type { Task } from "@/lib/db";
 import { listTasksForCalendar } from "@/lib/tasks";
 import { EventDetail } from "@/components/events/event-detail";
-import type { Task } from "@/lib/db";
 
 type Params = Promise<{ id: string }>;
 

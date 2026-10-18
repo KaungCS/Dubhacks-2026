@@ -4,12 +4,13 @@ import { TemplateEditor } from "@/components/events/template-editor";
 import { actionCreateTemplate } from "../actions";
 
 export default async function NewTemplatePage() {
-  await requireMembership();
+  const { membership } = await requireMembership();
+  const isAdmin = membership.role === "admin";
 
   async function save(values: {
     name: string;
     taskItems: Parameters<typeof actionCreateTemplate>[0]["taskItems"];
-    fileTypes: Parameters<typeof actionCreateTemplate>[0]["fileTypes"];
+    fileTypeConfigs: Parameters<typeof actionCreateTemplate>[0]["fileTypeConfigs"];
   }) {
     "use server";
     await actionCreateTemplate(values);
@@ -25,14 +26,26 @@ export default async function NewTemplatePage() {
           {" / New"}
         </p>
         <h1 className="text-2xl font-semibold">New template</h1>
+        {isAdmin ? (
+          <p className="text-sm text-neutral-600">
+            Optionally paste Google file links for Slides, RSVP form, or sign-in
+            sheet — events created from this template will copy those files into
+            the event Drive folder.
+          </p>
+        ) : null}
       </div>
 
       <TemplateEditor
         initial={{
           name: "",
           taskItems: [{ title: "", days_before: 7, role: "" }],
-          fileTypes: ["folder", "rsvp_form", "signin_sheet"],
+          fileTypeConfigs: [
+            { key: "folder", sourceFileId: null, sourceUrl: null },
+            { key: "rsvp_form", sourceFileId: null, sourceUrl: null },
+            { key: "signin_sheet", sourceFileId: null, sourceUrl: null },
+          ],
         }}
+        canSetSources={isAdmin}
         submitLabel="Create template"
         onSubmit={save}
       />
