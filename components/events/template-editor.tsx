@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { Button, Input } from "@/components/ui";
 import {
   ALL_FILE_TYPES,
@@ -95,10 +96,20 @@ export function TemplateEditor({
         fileTypeConfigs,
       });
     } catch (err) {
+      // redirect() from the server action throws NEXT_REDIRECT — must rethrow
+      // or the save looks failed and navigation never happens.
+      if (isRedirectError(err)) throw err;
       setError(err instanceof Error ? err.message : "Save failed");
       setPending(false);
     }
   }
+
+  const duplicatable = ALL_FILE_TYPES.filter((ft) =>
+    DUPLICATABLE_FILE_TYPES.includes(ft.key),
+  );
+  const otherFileTypes = ALL_FILE_TYPES.filter(
+    (ft) => !DUPLICATABLE_FILE_TYPES.includes(ft.key),
+  );
 
   return (
     <form onSubmit={handleSubmit} className="mx-auto max-w-xl space-y-8">
@@ -176,15 +187,47 @@ export function TemplateEditor({
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium text-black">File types</h2>
-        <ul className="space-y-3 text-sm text-neutral-800">
-          {ALL_FILE_TYPES.map(({ key, label, sourceHint }) => {
+        <ul className="space-y-2 text-sm text-neutral-800">
+          {otherFileTypes.map(({ key, label }) => (
+            <li key={key} className="flex items-center gap-2">
+              <input
+                id={`ft-${key}`}
+                type="checkbox"
+                checked={fileTypes.has(key)}
+                onChange={(e) => toggleFileType(key, e.target.checked)}
+                className="h-4 w-4 border border-black"
+              />
+              <label htmlFor={`ft-${key}`}>{label}</label>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="space-y-3 border border-black p-4">
+        <div className="space-y-1">
+          <h2 className="text-sm font-medium text-black">
+            Duplicate from Google link
+          </h2>
+          {canSetSources ? (
+            <p className="text-sm text-neutral-600">
+              Check a file type, then paste its Google Form, Slides, or Sheet link
+              (or file id). Creating an event from this template copies that file
+              into the event Drive folder. Leave blank to create a new blank file.
+            </p>
+          ) : (
+            <p className="text-sm text-neutral-600">
+              Only club admins can set Google source links. Ask an admin if you need
+              a Form, Slides deck, or Sheet duplicated for each event.
+            </p>
+          )}
+        </div>
+
+        <ul className="space-y-4 text-sm text-neutral-800">
+          {duplicatable.map(({ key, label, sourceHint }) => {
             const checked = fileTypes.has(key);
-            const showSource =
-              canSetSources &&
-              checked &&
-              DUPLICATABLE_FILE_TYPES.includes(key);
+            const sourceValue = sources[key] ?? "";
             return (
-              <li key={key} className="space-y-2">
+              <li key={key} className="space-y-2 border border-neutral-200 p-3">
                 <div className="flex items-center gap-2">
                   <input
                     id={`ft-${key}`}
@@ -193,35 +236,47 @@ export function TemplateEditor({
                     onChange={(e) => toggleFileType(key, e.target.checked)}
                     className="h-4 w-4 border border-black"
                   />
-                  <label htmlFor={`ft-${key}`}>{label}</label>
+                  <label htmlFor={`ft-${key}`} className="font-medium text-black">
+                    {label}
+                  </label>
                 </div>
-                {showSource ? (
-                  <div className="ml-6 space-y-1">
+
+                {canSetSources ? (
+                  <div className="space-y-1">
                     <label
-                      className="block text-xs text-neutral-500"
+                      className="block text-sm text-neutral-700"
                       htmlFor={`ft-src-${key}`}
                     >
                       {sourceHint ?? "Google file link or id to duplicate"}
                     </label>
                     <Input
                       id={`ft-src-${key}`}
-                      value={sources[key] ?? ""}
+                      value={sourceValue}
                       onChange={(e) => setSource(key, e.target.value)}
                       placeholder="https://docs.google.com/…"
                       autoComplete="off"
+                      disabled={!checked}
+                      aria-disabled={!checked}
                     />
-                    <p className="text-xs text-neutral-500">
-                      Leave blank to create a new blank file. When set, creating an
-                      event copies this Google file into the event Drive folder.
-                    </p>
+                    {!checked ? (
+                      <p className="text-xs text-neutral-500">
+                        Check {label} above to enable this link field.
+                      </p>
+                    ) : (
+                      <p className="text-xs text-neutral-500">
+                        Use the edit/open link from Drive (not forms.gle or a form
+                        response URL).
+                      </p>
+                    )}
                   </div>
-                ) : null}
-                {!canSetSources &&
-                checked &&
-                DUPLICATABLE_FILE_TYPES.includes(key) &&
-                (sources[key] ?? "").trim() ? (
-                  <p className="ml-6 text-xs text-neutral-500">
-                    Duplicates from a configured Google file (admin-only to change).
+                ) : checked && sourceValue.trim() ? (
+                  <p className="text-xs text-neutral-500">
+                    Will duplicate from a configured Google file (admin-only to
+                    change).
+                  </p>
+                ) : checked ? (
+                  <p className="text-xs text-neutral-500">
+                    No Google source set — a new blank file is created.
                   </p>
                 ) : null}
               </li>

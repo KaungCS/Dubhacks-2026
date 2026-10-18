@@ -24,6 +24,11 @@ export default async function NewEventPage() {
           {" / New"}
         </p>
         <h1 className="text-2xl font-semibold">Create event from template</h1>
+        <p className="text-sm text-neutral-600">
+          If the template has Google Form / Slides / Sheet links set under Templates
+          → edit → <span className="font-medium text-black">Duplicate from Google link</span>,
+          those files are Drive-copied into this event&apos;s folder.
+        </p>
       </div>
 
       {loadError ? <p className="text-sm text-red-600">{loadError}</p> : null}

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { Button, Input, Select } from "@/components/ui";
 import type { EventTemplate } from "@/lib/events/types";
 import { actionCreateEventFromTemplate } from "@/app/events/actions";
@@ -32,6 +33,7 @@ export function CreateEventForm({ templates }: Props) {
         location,
       });
     } catch (err) {
+      if (isRedirectError(err)) throw err;
       setError(err instanceof Error ? err.message : "Create failed");
       setPending(false);
     }

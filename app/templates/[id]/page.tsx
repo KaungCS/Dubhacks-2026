@@ -56,10 +56,15 @@ export default async function EditTemplatePage({ params }: { params: Params }) {
         <h1 className="text-2xl font-semibold">Edit template</h1>
         {isAdmin ? (
           <p className="text-sm text-neutral-600">
-            For Slides, RSVP form, or sign-in sheet, paste a Google file link to
-            duplicate when creating events.
+            Scroll to <span className="font-medium text-black">Duplicate from Google link</span>{" "}
+            to paste Form / Slides / Sheet URLs. Those files are copied into each
+            new event&apos;s Drive folder.
           </p>
-        ) : null}
+        ) : (
+          <p className="text-sm text-neutral-600">
+            Google source links are visible below but only admins can change them.
+          </p>
+        )}
       </div>
 
       <TemplateEditor

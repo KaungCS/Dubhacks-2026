@@ -9,6 +9,7 @@ import {
   type FileTypeConfig,
   type TemplateTaskItem,
 } from "@/lib/events/types";
+import { GoogleNotConnectedError } from "@/lib/google/client";
 import { getGoogleFileMeta, parseGoogleFileId } from "@/lib/google/drive";
 
 async function requireAdmin() {
@@ -17,6 +18,13 @@ async function requireAdmin() {
     throw new Error("Only admins can create or edit templates with Google sources");
   }
   return ctx;
+}
+
+function googleSourceErrorMessage(err: unknown): string {
+  if (err instanceof GoogleNotConnectedError) {
+    return "Google is not connected for this club. An admin must connect it in Settings before saving Google source links.";
+  }
+  return err instanceof Error ? err.message : String(err);
 }
 
 /**
@@ -47,9 +55,7 @@ async function resolveFileTypeSources(
     try {
       fileId = parseGoogleFileId(raw);
     } catch (err) {
-      throw new Error(
-        `${labelFor(config.key)}: ${err instanceof Error ? err.message : String(err)}`,
-      );
+      throw new Error(`${labelFor(config.key)}: ${googleSourceErrorMessage(err)}`);
     }
 
     const expectKind = FILE_TYPE_EXPECT_KIND[config.key];
@@ -66,9 +72,7 @@ async function resolveFileTypeSources(
         sourceUrl: looksLikeUrl(raw) ? raw : meta.webViewLink,
       });
     } catch (err) {
-      throw new Error(
-        `${labelFor(config.key)}: ${err instanceof Error ? err.message : String(err)}`,
-      );
+      throw new Error(`${labelFor(config.key)}: ${googleSourceErrorMessage(err)}`);
     }
   }
 
