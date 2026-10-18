@@ -144,22 +144,6 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
         </Link>
       </div>
 
-      <section className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="font-semibold">Calendar</h2>
-          <Link href="/calendar" className="text-sm underline-offset-2 hover:underline">
-            Open full calendar
-          </Link>
-        </div>
-        <CalendarView
-          events={allEvents}
-          tasks={tasks}
-          initialYear={today.getFullYear()}
-          initialMonth={today.getMonth()}
-          todayKey={today.toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" })}
-        />
-      </section>
-
       <Tabs label="Dashboard views" current={tab} items={TABS.map((t) => ({ ...t, href: t.key === "files" ? "/" : `/?tab=${t.key}` }))} />
 
       {tab === "files" && (
@@ -246,6 +230,22 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
           })()}
         />
       )}
+
+      <section className="space-y-3 pt-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-semibold">Calendar</h2>
+          <Link href="/calendar" className="text-sm underline-offset-2 hover:underline">
+            Open full calendar
+          </Link>
+        </div>
+        <CalendarView
+          events={allEvents}
+          tasks={tasks}
+          initialYear={today.getFullYear()}
+          initialMonth={today.getMonth()}
+          todayKey={today.toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" })}
+        />
+      </section>
     </Page>
   );
 }
