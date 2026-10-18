@@ -71,8 +71,8 @@ How to use them:
 - Start every page, server action and route handler with `const { user, membership, workspace } = await requireMembership()`. With no argument it uses the signed-in officer's current club; it redirects to sign-in or setup by itself.
 - `getDb()` uses the service-role key and **bypasses RLS** (the browser can read nothing). So filter every query by `workspace.id` and never query from client components.
 - Row types: `import type { Task, Event, User, Membership, Tables } from '@/lib/db'` (e.g. `Tables<'polls'>`). Schema: `supabase/migrations/`.
-- `getGoogleClient` throws `GoogleNotConnectedError` when the admin hasn't connected Google or Google revoked the token; every page then shows a reconnect banner. Scopes are `calendar` and `drive.file`: Forms and Sheets the app creates work under `drive.file`. If a Google call fails with a scope error, tell Kaung.
-- The shared drive ID is `workspace.shared_drive_id` (create files with `parents: [id]` and `supportsAllDrives: true`); the club calendar is `workspace.calendar_id`.
+- `getGoogleClient` throws `GoogleNotConnectedError` when the admin hasn't connected Google or Google revoked the token; every page then shows a reconnect banner. Scopes are `calendar` and full `drive` (tested: `drive.file` could create files in the shared drive but couldn't read it or manage officers on it). `drive` also covers Forms and Sheets. If a Google call fails with a scope error, tell Kaung.
+- The club's Drive root is `workspace.shared_drive_id`: a shared drive, or a regular folder for admins on personal Gmail, which can't make shared drives. Create files with `parents: [id]` and `supportsAllDrives: true`; that works for both. The club calendar is `workspace.calendar_id`.
 - The bell: `components/notifications/Bell.tsx` exports `NotificationBell`, which `app/layout.tsx` renders on every page.
 
 Tasks and notifications (Jackson), used by Jun and Dom:
