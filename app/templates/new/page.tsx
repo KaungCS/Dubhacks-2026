@@ -4,8 +4,7 @@ import { TemplateEditor } from "@/components/events/template-editor";
 import { actionCreateTemplate } from "../actions";
 
 export default async function NewTemplatePage() {
-  const { membership } = await requireMembership();
-  const isAdmin = membership.role === "admin";
+  await requireMembership();
 
   async function save(values: {
     name: string;
@@ -26,13 +25,11 @@ export default async function NewTemplatePage() {
           {" / New"}
         </p>
         <h1 className="text-2xl font-semibold">New template</h1>
-        {isAdmin ? (
-          <p className="text-sm text-neutral-600">
-            Optionally paste Google file links for Slides, RSVP form, or sign-in
-            sheet — events created from this template will copy those files into
-            the event Drive folder.
-          </p>
-        ) : null}
+        <p className="text-sm text-neutral-600">
+          In the <span className="font-medium text-black">Duplicate from Google link</span>{" "}
+          section, paste Form / Slides / Sheet links. Events created from this
+          template will Drive-copy those files into the event folder.
+        </p>
       </div>
 
       <TemplateEditor
@@ -42,10 +39,10 @@ export default async function NewTemplatePage() {
           fileTypeConfigs: [
             { key: "folder", sourceFileId: null, sourceUrl: null },
             { key: "rsvp_form", sourceFileId: null, sourceUrl: null },
+            { key: "slides", sourceFileId: null, sourceUrl: null },
             { key: "signin_sheet", sourceFileId: null, sourceUrl: null },
           ],
         }}
-        canSetSources={isAdmin}
         submitLabel="Create template"
         onSubmit={save}
       />

@@ -1,5 +1,5 @@
 import { google } from "googleapis";
-import { getGoogleClient } from "@/lib/google/client";
+import { getGoogleClient, GoogleNotConnectedError } from "@/lib/google/client";
 import { getDb } from "@/lib/db";
 
 /** Google Workspace MIME types we can duplicate via Drive files.copy. */
@@ -148,6 +148,7 @@ export async function getGoogleFileMeta(
       webViewLink: data.webViewLink ?? null,
     };
   } catch (err) {
+    if (err instanceof GoogleNotConnectedError) throw err;
     if (err instanceof Error && /Unsupported Google|folder|forms\.gle|response \(view\)/.test(err.message)) {
       throw err;
     }
@@ -222,6 +223,7 @@ export async function copyGoogleFile(
       name: copied.data.name ?? copyName,
     };
   } catch (err) {
+    if (err instanceof GoogleNotConnectedError) throw err;
     if (err instanceof Error && err.message.includes("Expected a ")) throw err;
     const status = (err as { code?: number; status?: number }).code
       ?? (err as { code?: number; status?: number }).status;

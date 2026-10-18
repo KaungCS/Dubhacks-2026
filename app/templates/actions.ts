@@ -9,14 +9,14 @@ import {
   type FileTypeConfig,
   type TemplateTaskItem,
 } from "@/lib/events/types";
+import { GoogleNotConnectedError } from "@/lib/google/client";
 import { getGoogleFileMeta, parseGoogleFileId } from "@/lib/google/drive";
 
-async function requireAdmin() {
-  const ctx = await requireMembership();
-  if (ctx.membership.role !== "admin") {
-    throw new Error("Only admins can create or edit templates with Google sources");
+function googleSourceErrorMessage(err: unknown): string {
+  if (err instanceof GoogleNotConnectedError) {
+    return "Google is not connected for this club. An admin must connect it in Settings before saving Google source links.";
   }
-  return ctx;
+  return err instanceof Error ? err.message : String(err);
 }
 
 /**
@@ -47,9 +47,7 @@ async function resolveFileTypeSources(
     try {
       fileId = parseGoogleFileId(raw);
     } catch (err) {
-      throw new Error(
-        `${labelFor(config.key)}: ${err instanceof Error ? err.message : String(err)}`,
-      );
+      throw new Error(`${labelFor(config.key)}: ${googleSourceErrorMessage(err)}`);
     }
 
     const expectKind = FILE_TYPE_EXPECT_KIND[config.key];
@@ -66,9 +64,7 @@ async function resolveFileTypeSources(
         sourceUrl: looksLikeUrl(raw) ? raw : meta.webViewLink,
       });
     } catch (err) {
-      throw new Error(
-        `${labelFor(config.key)}: ${err instanceof Error ? err.message : String(err)}`,
-      );
+      throw new Error(`${labelFor(config.key)}: ${googleSourceErrorMessage(err)}`);
     }
   }
 
@@ -112,21 +108,12 @@ export async function actionCreateTemplate(form: {
   taskItems: TemplateTaskItem[];
   fileTypeConfigs: FileTypeConfig[];
 }) {
-  const { workspace, membership } = await requireMembership();
-  const isAdmin = membership.role === "admin";
-
-  let fileTypeConfigs = form.fileTypeConfigs.map((c) => ({
-    key: c.key,
-    sourceFileId: null as string | null,
-    sourceUrl: null as string | null,
-  }));
-
-  if (isAdmin) {
-    fileTypeConfigs = await resolveFileTypeSources(
-      workspace.id,
-      form.fileTypeConfigs,
-    );
-  }
+  // Any club member who can open the template editor may set Google sources.
+  const { workspace } = await requireMembership();
+  const fileTypeConfigs = await resolveFileTypeSources(
+    workspace.id,
+    form.fileTypeConfigs,
+  );
 
   const template = await createTemplate({
     workspaceId: workspace.id,
@@ -143,36 +130,11 @@ export async function actionUpdateTemplate(form: {
   taskItems: TemplateTaskItem[];
   fileTypeConfigs: FileTypeConfig[];
 }) {
-  const { workspace, membership } = await requireMembership();
-  const isAdmin = membership.role === "admin";
-
-  let fileTypeConfigs: FileTypeConfig[];
-
-  if (isAdmin) {
-    fileTypeConfigs = await resolveFileTypeSources(
-      workspace.id,
-      form.fileTypeConfigs,
-    );
-  } else {
-    // Officers can edit name/tasks/checklist keys but cannot change Google sources.
-    // Preserve existing sources from the stored template for keys that remain enabled.
-    const { getTemplate } = await import("@/lib/events");
-    const existing = await getTemplate(form.templateId);
-    if (existing.workspace_id !== workspace.id) {
-      throw new Error("Template not found in this club");
-    }
-    const byKey = new Map(
-      existing.file_type_configs.map((c) => [c.key, c] as const),
-    );
-    fileTypeConfigs = form.fileTypeConfigs.map((c) => {
-      const prev = byKey.get(c.key);
-      return {
-        key: c.key,
-        sourceFileId: prev?.sourceFileId ?? null,
-        sourceUrl: prev?.sourceUrl ?? null,
-      };
-    });
-  }
+  const { workspace } = await requireMembership();
+  const fileTypeConfigs = await resolveFileTypeSources(
+    workspace.id,
+    form.fileTypeConfigs,
+  );
 
   await updateTemplate(form.templateId, {
     name: form.name,
@@ -182,12 +144,12 @@ export async function actionUpdateTemplate(form: {
   redirect(`/templates/${form.templateId}`);
 }
 
-/** Admin-only: validate a Google source link without saving (optional UX helper). */
+/** Validate a Google source link without saving (optional UX helper). */
 export async function actionValidateGoogleSource(form: {
   fileTypeKey: FileTypeConfig["key"];
   source: string;
 }) {
-  const { workspace } = await requireAdmin();
+  const { workspace } = await requireMembership();
   if (!DUPLICATABLE_FILE_TYPES.includes(form.fileTypeKey)) {
     throw new Error("This file type does not support duplicate-from");
   }

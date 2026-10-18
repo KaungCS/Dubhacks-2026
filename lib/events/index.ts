@@ -16,6 +16,8 @@ export {
   parseFileTypeConfigs,
   serializeFileTypes,
   buildFileTypeConfigs,
+  sourceForFileType,
+  copySourceRef,
   ALL_FILE_TYPES,
   DUPLICATABLE_FILE_TYPES,
   FILE_TYPE_EXPECT_KIND,

@@ -212,6 +212,19 @@ export function sourceForFileType(
   return { sourceFileId: c.sourceFileId, sourceUrl: c.sourceUrl };
 }
 
+/**
+ * Value to pass to Drive files.copy for a template file type.
+ * Prefers stored file id; falls back to URL (parseGoogleFileId accepts both).
+ */
+export function copySourceRef(
+  configs: FileTypeConfig[],
+  key: FileTypeKey,
+): string | null {
+  const src = sourceForFileType(configs, key);
+  if (!src) return null;
+  return src.sourceFileId || src.sourceUrl || null;
+}
+
 /** Expected Drive MIME kind for template file types that support duplicate-from. */
 export const FILE_TYPE_EXPECT_KIND: Partial<Record<FileTypeKey, CopyableGoogleKind>> = {
   slides: "presentation",

@@ -13,21 +13,14 @@ import { getTemplate } from "./templates";
 import { getEvent } from "./get-event";
 import {
   FILE_TYPE_EXPECT_KIND,
-  sourceForFileType,
+  copySourceRef,
   type CreateFromTemplateInput,
-  type FileTypeConfig,
 } from "./types";
 
 function subtractDays(date: Date, days: number): Date {
   const d = new Date(date.getTime());
   d.setUTCDate(d.getUTCDate() - days);
   return d;
-}
-
-function sourceRef(configs: FileTypeConfig[], key: FileTypeConfig["key"]): string | null {
-  const src = sourceForFileType(configs, key);
-  if (!src) return null;
-  return src.sourceFileId || src.sourceUrl || null;
 }
 
 /**
@@ -84,8 +77,9 @@ export async function createEventFromTemplate(
   }
 
   if (fileTypes.has("slides")) {
-    const source = sourceRef(configs, "slides");
+    const source = copySourceRef(configs, "slides");
     if (source) {
+      // Must Drive-copy when a template source link/id is set (never create blank).
       const copied = await copyGoogleFile(input.workspaceId, {
         source,
         name: `${input.title} — Slides`,
@@ -106,7 +100,7 @@ export async function createEventFromTemplate(
   }
 
   if (fileTypes.has("rsvp_form")) {
-    const source = sourceRef(configs, "rsvp_form");
+    const source = copySourceRef(configs, "rsvp_form");
     if (source) {
       const copied = await copyGoogleFile(input.workspaceId, {
         source,
@@ -133,7 +127,7 @@ export async function createEventFromTemplate(
   }
 
   if (fileTypes.has("signin_sheet")) {
-    const source = sourceRef(configs, "signin_sheet");
+    const source = copySourceRef(configs, "signin_sheet");
     if (source) {
       const copied = await copyGoogleFile(input.workspaceId, {
         source,

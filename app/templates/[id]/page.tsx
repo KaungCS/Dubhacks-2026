@@ -8,8 +8,7 @@ type Params = Promise<{ id: string }>;
 
 export default async function EditTemplatePage({ params }: { params: Params }) {
   const { id } = await params;
-  const { workspace, membership } = await requireMembership();
-  const isAdmin = membership.role === "admin";
+  const { workspace } = await requireMembership();
 
   let template;
   try {
@@ -54,12 +53,11 @@ export default async function EditTemplatePage({ params }: { params: Params }) {
           {template.name}
         </p>
         <h1 className="text-2xl font-semibold">Edit template</h1>
-        {isAdmin ? (
-          <p className="text-sm text-neutral-600">
-            For Slides, RSVP form, or sign-in sheet, paste a Google file link to
-            duplicate when creating events.
-          </p>
-        ) : null}
+        <p className="text-sm text-neutral-600">
+          Scroll to <span className="font-medium text-black">Duplicate from Google link</span>{" "}
+          to paste Form / Slides / Sheet URLs. Those files are copied into each
+          new event&apos;s Drive folder.
+        </p>
       </div>
 
       <TemplateEditor
@@ -68,7 +66,6 @@ export default async function EditTemplatePage({ params }: { params: Params }) {
           taskItems: template.task_items,
           fileTypeConfigs: template.file_type_configs,
         }}
-        canSetSources={isAdmin}
         submitLabel="Save template"
         onSubmit={save}
       />
