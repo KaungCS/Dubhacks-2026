@@ -7,18 +7,20 @@ const focus = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visi
 
 export const buttonClass = `inline-flex items-center justify-center rounded-full border border-black bg-white px-4 py-1.5 text-sm text-black hover:bg-black hover:text-white disabled:pointer-events-none disabled:opacity-40 ${focus}`
 
-const fieldClass = `rounded-full border border-black bg-white px-4 py-1.5 text-sm text-black outline-none ${focus}`
+// No rounding here: two rounded-* classes on one element conflict, and Tailwind's stylesheet order (not
+// class order) picks the winner. Each field adds its own.
+const fieldClass = `border border-black bg-white px-4 py-1.5 text-sm text-black outline-none ${focus}`
 
 export function Button({ className = '', ...props }: ComponentProps<'button'>) {
   return <button className={`${buttonClass} ${className}`} {...props} />
 }
 
 export function Input({ className = '', ...props }: ComponentProps<'input'>) {
-  return <input className={`${fieldClass} ${className}`} {...props} />
+  return <input className={`${fieldClass} rounded-full ${className}`} {...props} />
 }
 
 export function Select({ className = '', ...props }: ComponentProps<'select'>) {
-  return <select className={`${fieldClass} ${className}`} {...props} />
+  return <select className={`${fieldClass} rounded-full ${className}`} {...props} />
 }
 
 export function Textarea({ className = '', ...props }: ComponentProps<'textarea'>) {
