@@ -48,7 +48,7 @@ Everything hangs off a Workspace (one per club). Google IDs are stored as refere
 | Event | title, starts\_at, ends\_at, location, status, template\_id, calendar\_event\_id, drive\_folder\_id, rsvp\_form\_id, signin\_sheet\_id, slides\_id | Created from a template; owns its tasks |
 | EventTemplate | name, task\_items (title, days\_before, role), file\_types (folder, RSVP form, slides, sign-in sheet) | Built by admins; generates tasks and files |
 | Task | title, description, event\_id (optional), due\_at, status, difficulty (easy, medium, hard), is\_prereq, completed\_at, created\_by | Shows on the calendar by `due_at` |
-| TaskAssignee | task\_id, user\_id, completed\_at | Multiple assignees allowed (co-roles). Each officer marks only their own part done; admins can mark anyone's. Task status follows: none done → todo, some → in progress, all → done |
+| TaskAssignee | task\_id, user\_id, completed\_at | Multiple assignees allowed (co-roles). Each officer marks only their own part done, after a confirmation page; admins can mark anyone's. Task status follows: none done → todo, some → in progress, all → done |
 | TaskTag | task\_id, user\_id | Officers notified when a prereq task is done |
 | Poll | question, created\_by, closes\_at, multiple\_choice, results\_visibility (live, after\_vote, after\_close), status | Creator sees non-voters |
 | PollOption / Vote | poll\_id, option\_id, user\_id | One vote per officer, or several options if multiple choice |
@@ -65,7 +65,7 @@ In-app only, in the bell on every page. No email.
 | Trigger | Who gets it |
 | --- | --- |
 | A task is assigned to you | The new assignee, unless they assigned themselves |
-| A prereq task becomes done | Its tagged officers |
+| A prereq task becomes done | Its tagged officers, at most once every 2 minutes per task |
 | A poll opens / is closing soon | Officers (closing: those who haven't voted) |
 | An event reaches its RSVP target | Officers |
 

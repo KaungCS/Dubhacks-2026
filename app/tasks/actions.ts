@@ -1,8 +1,7 @@
 'use server'
 
-import { refresh } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { requireMembership } from '@/lib/auth'
+import { requireMembership, safePath } from '@/lib/auth'
 import { getEvent } from '@/lib/events'
 import { createTask, listOfficers, setCompletion, updateTask } from '@/lib/tasks'
 
@@ -39,12 +38,17 @@ export async function createTaskAction(fd: FormData) {
 
 export async function updateTaskAction(fd: FormData) {
   const { user, workspace } = await requireMembership()
-  await updateTask(workspace.id, String(fd.get('id')), await readTaskForm(fd, workspace.id), user.id)
-  redirect('/tasks')
+  const id = String(fd.get('id'))
+  await updateTask(workspace.id, id, await readTaskForm(fd, workspace.id), user.id)
+  redirect(`/tasks/${id}`)
 }
 
-export async function setCompletionAction(taskId: string, assigneeId: string | null, done: boolean) {
+// From the confirmation page. done is the state being confirmed, so a second submit changes nothing.
+export async function setCompletionAction(fd: FormData) {
   const { user, membership, workspace } = await requireMembership()
-  await setCompletion(workspace.id, taskId, assigneeId, done, { id: user.id, isAdmin: membership.role === 'admin' })
-  refresh()
+  const id = String(fd.get('id'))
+  const assignee = String(fd.get('assignee') ?? '') || null
+  await setCompletion(workspace.id, id, assignee, fd.get('done') === 'true', { id: user.id, isAdmin: membership.role === 'admin' })
+  const back = fd.get('back')
+  redirect(back ? safePath(back) : `/tasks/${id}`)
 }
