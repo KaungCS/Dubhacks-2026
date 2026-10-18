@@ -25,18 +25,33 @@ export function oauthClient() {
   )
 }
 
+// One client per club, kept while its stored token stays the same, so its access token (valid about an
+// hour) is reused across requests instead of refreshed from Google on every call. Calls that arrive
+// together share one refresh. A reconnect stores a new token, which replaces the client.
+const clients = new Map<string, { token: string; client: Auth.OAuth2Client }>()
+
 // OAuth client authorized as the club admin who connected Google.
 // Throws GoogleNotConnectedError if no token is stored or Google revoked it (then the
 // token is cleared and every page shows the reconnect banner).
 export async function getGoogleClient(workspaceId: string): Promise<Auth.OAuth2Client> {
   const { data } = await getDb().from('workspaces').select('google_token').eq('id', workspaceId).single()
-  if (!data?.google_token) throw new GoogleNotConnectedError()
-  const client = oauthClient()
-  client.setCredentials({ refresh_token: decrypt(data.google_token) })
+  if (!data?.google_token) {
+    clients.delete(workspaceId)
+    throw new GoogleNotConnectedError()
+  }
+  let cached = clients.get(workspaceId)
+  if (cached?.token !== data.google_token) {
+    const client = oauthClient()
+    client.setCredentials({ refresh_token: decrypt(data.google_token) })
+    cached = { token: data.google_token, client }
+    clients.set(workspaceId, cached)
+  }
+  const { client } = cached
   try {
-    // ponytail: refreshes the access token on every call (~100ms); cache it on the workspace if that adds up.
+    // No network call while the cached access token is still valid.
     await client.getAccessToken()
   } catch (e) {
+    clients.delete(workspaceId)
     if (!String(e).includes('invalid_grant')) throw e
     await getDb().from('workspaces').update({ google_token: null }).eq('id', workspaceId)
     throw new GoogleNotConnectedError()

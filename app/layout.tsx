@@ -8,7 +8,7 @@ import { SidebarNav } from "@/components/ui/sidebar-nav";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Club Ops",
+  title: "My RSO",
   description: "Events, tasks and decisions for club officers",
 };
 

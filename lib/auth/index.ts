@@ -27,24 +27,35 @@ export async function authClient() {
   })
 }
 
-const getSessionUser = cache(async (): Promise<User | null> => {
+// Verified id of the signed-in user, read from the session cookie once per request.
+const getSessionUserId = cache(async (): Promise<string | null> => {
   const { data } = await (await authClient()).auth.getClaims()
-  if (!data) return null
-  const { data: user } = await getDb().from('users').select().eq('id', data.claims.sub).maybeSingle()
+  return data?.claims.sub ?? null
+})
+
+const getSessionUser = cache(async (): Promise<User | null> => {
+  const id = await getSessionUserId()
+  if (!id) return null
+  const { data: user } = await getDb().from('users').select().eq('id', id).maybeSingle()
   return user
 })
 
 // Signed-in user, their active memberships, and the current one (cookie, else the first).
 // Null when signed out. Doesn't redirect, so the layout can use it.
 export const getContext = cache(async () => {
-  const user = await getSessionUser()
+  const id = await getSessionUserId()
+  if (!id) return null
+  // Both queries only need the user id, so they run together: every page load waits on this.
+  const [user, { data }] = await Promise.all([
+    getSessionUser(),
+    getDb()
+      .from('memberships')
+      .select('*, workspace:workspaces(*)')
+      .eq('user_id', id)
+      .is('left_at', null)
+      .order('joined_at'),
+  ])
   if (!user) return null
-  const { data } = await getDb()
-    .from('memberships')
-    .select('*, workspace:workspaces(*)')
-    .eq('user_id', user.id)
-    .is('left_at', null)
-    .order('joined_at')
   const memberships = (data ?? []).map(({ workspace: { google_token, ...ws }, ...m }) => ({
     ...m,
     workspace: { ...ws, google_connected: !!google_token } as Workspace,

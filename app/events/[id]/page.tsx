@@ -9,12 +9,17 @@ type Params = Promise<{ id: string }>;
 
 export default async function EventDetailPage({ params }: { params: Params }) {
   const { id } = await params;
-  const { workspace } = await requireMembership();
+  // The event read doesn't depend on the session, so it runs alongside the membership check.
+  const [{ workspace }, found] = await Promise.all([
+    requireMembership(),
+    getEvent(id).then(
+      (event) => ({ event, error: null }),
+      (error: unknown) => ({ event: null, error }),
+    ),
+  ]);
 
-  let event;
-  try {
-    event = await getEvent(id);
-  } catch (err) {
+  const { event, error: err } = found;
+  if (!event) {
     return (
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold">Event</h1>
@@ -34,24 +39,18 @@ export default async function EventDetailPage({ params }: { params: Params }) {
     );
   }
 
-  let attendance: { rsvps: number; attended: number } | null = null;
-  try {
-    attendance = await getEventAttendance(event.id);
-  } catch {
-    attendance = null;
-  }
-
-  let tasks: Task[] = [];
-  try {
-    const from = new Date(event.starts_at);
-    from.setUTCMonth(from.getUTCMonth() - 3);
-    const to = new Date(event.ends_at ?? event.starts_at);
-    to.setUTCMonth(to.getUTCMonth() + 1);
-    const rows = await listTasksForCalendar(workspace.id, from, to);
-    tasks = rows.filter((row) => row.event_id === event.id);
-  } catch {
-    tasks = [];
-  }
+  // Attendance (which may refresh from Google) and the event's tasks load together.
+  const from = new Date(event.starts_at);
+  from.setUTCMonth(from.getUTCMonth() - 3);
+  const to = new Date(event.ends_at ?? event.starts_at);
+  to.setUTCMonth(to.getUTCMonth() + 1);
+  const [attendance, tasks] = await Promise.all([
+    getEventAttendance(event.id).catch(() => null),
+    listTasksForCalendar(workspace.id, from, to).then(
+      (rows) => rows.filter((row) => row.event_id === event.id),
+      (): Task[] => [],
+    ),
+  ]);
 
   return <EventDetail event={event} attendance={attendance} tasks={tasks} />;
 }
