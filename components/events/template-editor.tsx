@@ -20,7 +20,10 @@ export type TemplateEditorValues = {
 type Props = {
   initial: TemplateEditorValues;
   submitLabel: string;
-  /** When true, show Google source-link fields for slides/sheet/form. */
+  /**
+   * When true, show editable Google source-link fields for slides/sheet/form.
+   * Pass true for any member who can edit templates (admin + officer on main).
+   */
   canSetSources?: boolean;
   onSubmit: (values: TemplateEditorValues) => Promise<void>;
 };
@@ -208,24 +211,20 @@ export function TemplateEditor({
           <h2 className="text-sm font-medium text-black">
             Duplicate from Google link
           </h2>
-          {canSetSources ? (
-            <p className="text-sm text-neutral-600">
-              Check a file type, then paste its Google Form, Slides, or Sheet link
-              (or file id). Creating an event from this template copies that file
-              into the event Drive folder. Leave blank to create a new blank file.
-            </p>
-          ) : (
-            <p className="text-sm text-neutral-600">
-              Only club admins can set Google source links. Ask an admin if you need
-              a Form, Slides deck, or Sheet duplicated for each event.
-            </p>
-          )}
+          <p className="text-sm text-neutral-600">
+            {canSetSources
+              ? "Paste a Google Form, Slides, or Sheet link (or file id) for each type you enable. Creating an event copies that file into the event Drive folder. Leave blank to create a new blank file. Drive folder (above) has no link field — it is created fresh each time."
+              : "Google source links are configured for this template when set. You can still toggle which file types to create."}
+          </p>
         </div>
 
         <ul className="space-y-4 text-sm text-neutral-800">
           {duplicatable.map(({ key, label, sourceHint }) => {
             const checked = fileTypes.has(key);
             const sourceValue = sources[key] ?? "";
+            // Always show the paste field for duplicatable types when the editor
+            // may set sources — do not hide behind role === "admin" alone.
+            const showLinkField = canSetSources;
             return (
               <li key={key} className="space-y-2 border border-neutral-200 p-3">
                 <div className="flex items-center gap-2">
@@ -241,7 +240,7 @@ export function TemplateEditor({
                   </label>
                 </div>
 
-                {canSetSources ? (
+                {showLinkField ? (
                   <div className="space-y-1">
                     <label
                       className="block text-sm text-neutral-700"
@@ -260,7 +259,7 @@ export function TemplateEditor({
                     />
                     {!checked ? (
                       <p className="text-xs text-neutral-500">
-                        Check {label} above to enable this link field.
+                        Check {label} above to use this link when creating events.
                       </p>
                     ) : (
                       <p className="text-xs text-neutral-500">
@@ -271,8 +270,7 @@ export function TemplateEditor({
                   </div>
                 ) : checked && sourceValue.trim() ? (
                   <p className="text-xs text-neutral-500">
-                    Will duplicate from a configured Google file (admin-only to
-                    change).
+                    Will duplicate from a configured Google file.
                   </p>
                 ) : checked ? (
                   <p className="text-xs text-neutral-500">

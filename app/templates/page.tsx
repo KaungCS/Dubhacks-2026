@@ -5,8 +5,7 @@ import { listTemplates } from "@/lib/events";
 import { sourceForFileType } from "@/lib/events/types";
 
 export default async function TemplatesPage() {
-  const { workspace, membership } = await requireMembership();
-  const isAdmin = membership.role === "admin";
+  const { workspace } = await requireMembership();
 
   let templates = [] as Awaited<ReturnType<typeof listTemplates>>;
   let loadError: string | null = null;
@@ -25,14 +24,12 @@ export default async function TemplatesPage() {
         </Link>
       }
     >
-      {isAdmin ? (
-        <p className="text-sm text-neutral-600">
-          Open a template (or create one) and use{" "}
-          <span className="font-medium text-black">Duplicate from Google link</span>{" "}
-          to paste Form / Slides / Sheet links. Create Event then Drive-copies those
-          files.
-        </p>
-      ) : null}
+      <p className="text-sm text-neutral-600">
+        Open a template (or create one) and use{" "}
+        <span className="font-medium text-black">Duplicate from Google link</span>{" "}
+        to paste Form / Slides / Sheet links. Create Event then Drive-copies those
+        files.
+      </p>
 
       {loadError ? <p className="text-sm text-red-600">{loadError}</p> : null}
 

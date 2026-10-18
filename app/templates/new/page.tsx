@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { requireMembership } from "@/lib/auth";
+import { canSetTemplateGoogleSources } from "@/lib/events";
 import { TemplateEditor } from "@/components/events/template-editor";
 import { actionCreateTemplate } from "../actions";
 
 export default async function NewTemplatePage() {
   const { membership } = await requireMembership();
-  const isAdmin = membership.role === "admin";
+  const canSetSources = canSetTemplateGoogleSources(membership.role);
 
   async function save(values: {
     name: string;
@@ -26,18 +27,11 @@ export default async function NewTemplatePage() {
           {" / New"}
         </p>
         <h1 className="text-2xl font-semibold">New template</h1>
-        {isAdmin ? (
-          <p className="text-sm text-neutral-600">
-            In the <span className="font-medium text-black">Duplicate from Google link</span>{" "}
-            section, paste Form / Slides / Sheet links. Events created from this
-            template will Drive-copy those files into the event folder.
-          </p>
-        ) : (
-          <p className="text-sm text-neutral-600">
-            Google source links are admin-only. You can still set tasks and which
-            file types to create.
-          </p>
-        )}
+        <p className="text-sm text-neutral-600">
+          In the <span className="font-medium text-black">Duplicate from Google link</span>{" "}
+          section, paste Form / Slides / Sheet links. Events created from this
+          template will Drive-copy those files into the event folder.
+        </p>
       </div>
 
       <TemplateEditor
@@ -51,7 +45,7 @@ export default async function NewTemplatePage() {
             { key: "signin_sheet", sourceFileId: null, sourceUrl: null },
           ],
         }}
-        canSetSources={isAdmin}
+        canSetSources={canSetSources}
         submitLabel="Create template"
         onSubmit={save}
       />

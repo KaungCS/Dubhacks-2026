@@ -6,19 +6,12 @@ import { createTemplate, updateTemplate } from "@/lib/events";
 import {
   DUPLICATABLE_FILE_TYPES,
   FILE_TYPE_EXPECT_KIND,
+  canSetTemplateGoogleSources,
   type FileTypeConfig,
   type TemplateTaskItem,
 } from "@/lib/events/types";
 import { GoogleNotConnectedError } from "@/lib/google/client";
 import { getGoogleFileMeta, parseGoogleFileId } from "@/lib/google/drive";
-
-async function requireAdmin() {
-  const ctx = await requireMembership();
-  if (ctx.membership.role !== "admin") {
-    throw new Error("Only admins can create or edit templates with Google sources");
-  }
-  return ctx;
-}
 
 function googleSourceErrorMessage(err: unknown): string {
   if (err instanceof GoogleNotConnectedError) {
@@ -117,7 +110,6 @@ export async function actionCreateTemplate(form: {
   fileTypeConfigs: FileTypeConfig[];
 }) {
   const { workspace, membership } = await requireMembership();
-  const isAdmin = membership.role === "admin";
 
   let fileTypeConfigs = form.fileTypeConfigs.map((c) => ({
     key: c.key,
@@ -125,7 +117,8 @@ export async function actionCreateTemplate(form: {
     sourceUrl: null as string | null,
   }));
 
-  if (isAdmin) {
+  // Admins and officers (anyone who can edit templates on main) may set sources.
+  if (canSetTemplateGoogleSources(membership.role)) {
     fileTypeConfigs = await resolveFileTypeSources(
       workspace.id,
       form.fileTypeConfigs,
@@ -148,18 +141,16 @@ export async function actionUpdateTemplate(form: {
   fileTypeConfigs: FileTypeConfig[];
 }) {
   const { workspace, membership } = await requireMembership();
-  const isAdmin = membership.role === "admin";
 
   let fileTypeConfigs: FileTypeConfig[];
 
-  if (isAdmin) {
+  if (canSetTemplateGoogleSources(membership.role)) {
     fileTypeConfigs = await resolveFileTypeSources(
       workspace.id,
       form.fileTypeConfigs,
     );
   } else {
-    // Officers can edit name/tasks/checklist keys but cannot change Google sources.
-    // Preserve existing sources from the stored template for keys that remain enabled.
+    // Preserve existing sources if a future role can edit templates but not sources.
     const { getTemplate } = await import("@/lib/events");
     const existing = await getTemplate(form.templateId);
     if (existing.workspace_id !== workspace.id) {
@@ -186,12 +177,15 @@ export async function actionUpdateTemplate(form: {
   redirect(`/templates/${form.templateId}`);
 }
 
-/** Admin-only: validate a Google source link without saving (optional UX helper). */
+/** Validate a Google source link without saving (optional UX helper). */
 export async function actionValidateGoogleSource(form: {
   fileTypeKey: FileTypeConfig["key"];
   source: string;
 }) {
-  const { workspace } = await requireAdmin();
+  const { workspace, membership } = await requireMembership();
+  if (!canSetTemplateGoogleSources(membership.role)) {
+    throw new Error("You do not have permission to set Google source links");
+  }
   if (!DUPLICATABLE_FILE_TYPES.includes(form.fileTypeKey)) {
     throw new Error("This file type does not support duplicate-from");
   }
