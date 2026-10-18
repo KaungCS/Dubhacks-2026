@@ -1,6 +1,6 @@
 import { getDb, type Enums } from '@/lib/db'
 import { createNotification } from '@/lib/notifications'
-import { canSeeResults, isClosingSoon, isOpen, isValidVote } from './rules'
+import { canSeeResults, diffOptions, isClosingSoon, isOpen, isValidVote } from './rules'
 
 // Active officers of a club, optionally minus one user.
 export async function officerIds(workspaceId: string, except?: string): Promise<string[]> {
@@ -125,4 +125,56 @@ export async function vote(workspaceId: string, pollId: string, userId: string, 
 // Only the creator can close early.
 export async function closePoll(workspaceId: string, pollId: string, userId: string) {
   await getDb().from('polls').update({ status: 'closed' }).eq('id', pollId).eq('workspace_id', workspaceId).eq('created_by', userId)
+}
+
+const ms = (iso: string | null) => (iso ? Date.parse(iso) : null)
+
+// Creator only. Options keep their votes when their label stays (see diffOptions).
+export async function updatePoll(pollId: string, input: NewPoll) {
+  const db = getDb()
+  const { data: poll } = await db
+    .from('polls')
+    .select('closes_at, multiple_choice, poll_options(id, label), votes(option_id, user_id)')
+    .eq('id', pollId)
+    .eq('workspace_id', input.workspaceId)
+    .eq('created_by', input.createdBy)
+    .maybeSingle()
+  if (!poll) throw new Error('Only the poll creator can edit it.')
+
+  const { error } = await db
+    .from('polls')
+    .update({
+      question: input.question,
+      multiple_choice: input.multipleChoice,
+      closes_at: input.closesAt,
+      results_visibility: input.resultsVisibility,
+      // A new close time gets its own "closing soon" notice.
+      ...(ms(input.closesAt) !== ms(poll.closes_at) && { closing_notified_at: null }),
+    })
+    .eq('id', pollId)
+  if (error) throw error
+
+  const { remove, keep, add } = diffOptions(poll.poll_options, input.options)
+  // Removing an option removes its votes (on delete cascade).
+  const results = await Promise.all([
+    remove.length ? db.from('poll_options').delete().in('id', remove) : null,
+    ...keep.map((o) => db.from('poll_options').update({ position: o.position }).eq('id', o.id)),
+    add.length ? db.from('poll_options').insert(add.map((o) => ({ poll_id: pollId, ...o }))) : null,
+  ])
+  const failed = results.find((r) => r?.error)
+  if (failed?.error) throw failed.error
+
+  // Now single choice: officers who picked several options vote again.
+  if (poll.multiple_choice && !input.multipleChoice) {
+    const counts = new Map<string, number>()
+    for (const v of poll.votes) if (!remove.includes(v.option_id)) counts.set(v.user_id, (counts.get(v.user_id) ?? 0) + 1)
+    const several = [...counts].filter(([, n]) => n > 1).map(([id]) => id)
+    if (several.length) await db.from('votes').delete().eq('poll_id', pollId).in('user_id', several)
+  }
+}
+
+// Creator only. Options and votes go with it (on delete cascade).
+export async function deletePoll(workspaceId: string, pollId: string, userId: string) {
+  const { error } = await getDb().from('polls').delete().eq('id', pollId).eq('workspace_id', workspaceId).eq('created_by', userId)
+  if (error) throw error
 }

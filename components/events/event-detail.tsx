@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Event, Task } from "@/lib/db";
 import { eventLinks } from "@/lib/events";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { actionDeleteEvent } from "@/app/events/actions";
 
 type Attendance = { rsvps: number; attended: number };
 
@@ -30,7 +32,15 @@ export function EventDetail({ event, attendance, tasks }: Props) {
           {" / "}
           {event.title}
         </p>
-        <h1 className="text-2xl font-semibold text-black">{event.title}</h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl font-semibold text-black">{event.title}</h1>
+          <form action={actionDeleteEvent}>
+            <input type="hidden" name="id" value={event.id} />
+            <ConfirmButton message={`Delete "${event.title}" and its tasks? It is removed from the club calendar; its Drive files stay.`}>
+              Delete
+            </ConfirmButton>
+          </form>
+        </div>
         <p className="text-sm text-neutral-700">
           {formatWhen(event.starts_at)}
           {event.ends_at ? ` – ${formatWhen(event.ends_at)}` : ""}

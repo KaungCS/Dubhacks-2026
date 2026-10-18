@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { requireMembership } from "@/lib/auth";
-import { createEventFromTemplate } from "@/lib/events";
+import { createEventFromTemplate, deleteEvent } from "@/lib/events";
 
 export async function actionCreateEventFromTemplate(form: {
   templateId: string;
@@ -22,4 +22,10 @@ export async function actionCreateEventFromTemplate(form: {
     createdByUserId: user.id,
   });
   redirect(`/events/${event.id}`);
+}
+
+export async function actionDeleteEvent(fd: FormData) {
+  const { workspace } = await requireMembership();
+  await deleteEvent(workspace.id, String(fd.get("id")));
+  redirect("/events");
 }
