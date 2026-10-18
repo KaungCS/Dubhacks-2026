@@ -47,11 +47,13 @@ export function TaskList({ groups, names, viewer }: People & { groups: TaskGroup
           <h3 className="text-sm text-neutral-500">{role}</h3>
           <ul className="divide-y divide-neutral-100">
             {rows.map(({ task, assignees }) => (
-              <li key={task.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2">
+              // The title's ::after covers the row so the whole row opens the task; the completion links sit
+              // above it (relative, later in the DOM) so they stay clickable.
+              <li key={task.id} className="relative flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2 hover:bg-neutral-50">
                 <div className="min-w-0">
                   <Link
                     href={`/tasks/${task.id}`}
-                    className={`text-sm font-medium hover:underline ${task.status === 'done' ? 'text-neutral-400 line-through' : ''}`}
+                    className={`text-sm font-medium after:absolute after:inset-0 ${task.status === 'done' ? 'text-neutral-400 line-through' : ''}`}
                   >
                     {task.title}
                   </Link>
@@ -61,7 +63,7 @@ export function TaskList({ groups, names, viewer }: People & { groups: TaskGroup
                     {task.is_prereq && ' · prereq'}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-x-4 gap-y-1">
+                <div className="relative flex flex-wrap gap-x-4 gap-y-1">
                   {task.assignees.length === 0 ? (
                     <CompletionLink taskId={task.id} assigneeId={null} label="Done" done={task.status === 'done'} enabled={canSetCompletion(viewer, null)} back="/tasks" />
                   ) : (

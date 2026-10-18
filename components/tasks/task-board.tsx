@@ -21,14 +21,14 @@ export function TaskBoard({ tasks }: { tasks: TaskWithPeople[] }) {
             </h2>
             <ul className="divide-y divide-neutral-100">
               {columnTasks.map((task) => (
-                <li key={task.id} className="py-2">
-                  <Link href={`/tasks/${task.id}`} className="text-sm font-medium hover:underline">
-                    {task.title}
+                <li key={task.id}>
+                  <Link href={`/tasks/${task.id}`} className="block py-2 hover:bg-neutral-50">
+                    <p className="text-sm font-medium">{task.title}</p>
+                    <p className={`text-xs ${isOverdue(task) ? 'text-red-600' : 'text-neutral-500'}`}>
+                      {task.due_at ? pacific(task.due_at) : 'No due date'}
+                      {task.is_prereq && ' · prereq'}
+                    </p>
                   </Link>
-                  <p className={`text-xs ${isOverdue(task) ? 'text-red-600' : 'text-neutral-500'}`}>
-                    {task.due_at ? pacific(task.due_at) : 'No due date'}
-                    {task.is_prereq && ' · prereq'}
-                  </p>
                 </li>
               ))}
             </ul>
