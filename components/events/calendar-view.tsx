@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui";
 import type { Event, Task } from "@/lib/db";
+import { EventHoverPreview, EventPreviewModal } from "./event-preview";
 
 type Props = {
   events: Event[];
@@ -25,6 +25,8 @@ const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export function CalendarView({ events, tasks, initialYear, initialMonth }: Props) {
   const [year, setYear] = useState(initialYear);
   const [month, setMonth] = useState(initialMonth);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const cells = useMemo(() => {
     const first = new Date(year, month, 1);
@@ -61,6 +63,10 @@ export function CalendarView({ events, tasks, initialYear, initialMonth }: Props
     }
     return map;
   }, [tasks]);
+
+  const selected = selectedId
+    ? (events.find((e) => e.id === selectedId) ?? null)
+    : null;
 
   function prevMonth() {
     if (month === 0) {
@@ -105,7 +111,10 @@ export function CalendarView({ events, tasks, initialYear, initialMonth }: Props
         {cells.map((cell) => {
           if (!cell.date) {
             return (
-              <div key={cell.key} className="min-h-28 border-b border-r border-neutral-100 bg-white" />
+              <div
+                key={cell.key}
+                className="min-h-28 border-b border-r border-neutral-100 bg-white"
+              />
             );
           }
           const dayEvents = eventsByDay.get(cell.key) ?? [];
@@ -118,13 +127,27 @@ export function CalendarView({ events, tasks, initialYear, initialMonth }: Props
               <div className="mb-1 text-xs text-neutral-500">{cell.date.getDate()}</div>
               <ul className="space-y-1">
                 {dayEvents.map((event) => (
-                  <li key={event.id}>
-                    <Link
-                      href={`/events/${event.id}`}
-                      className="block truncate text-xs text-black underline-offset-2 hover:underline"
+                  <li
+                    key={event.id}
+                    className="relative"
+                    onMouseEnter={() => setHoveredId(event.id)}
+                    onMouseLeave={() =>
+                      setHoveredId((id) => (id === event.id ? null : id))
+                    }
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHoveredId(null);
+                        setSelectedId(event.id);
+                      }}
+                      className="block w-full truncate text-left text-xs text-black underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-black"
                     >
                       {event.title}
-                    </Link>
+                    </button>
+                    {hoveredId === event.id && selectedId !== event.id ? (
+                      <EventHoverPreview event={event} />
+                    ) : null}
                   </li>
                 ))}
                 {dayTasks.map((task) => (
@@ -137,6 +160,10 @@ export function CalendarView({ events, tasks, initialYear, initialMonth }: Props
           );
         })}
       </div>
+
+      {selected ? (
+        <EventPreviewModal event={selected} onClose={() => setSelectedId(null)} />
+      ) : null}
     </div>
   );
 }
