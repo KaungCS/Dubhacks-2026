@@ -11,7 +11,7 @@ One workspace where a club's officers plan events, track tasks and make decision
 - **Events**: created from a club-built template that generates the event's tasks and Google files.
 - **Polls, metrics, files, members, settings**: secondary menu.
 
-Officers only. Non-officer members do not use the app (RSVPs happen through a Google Form). There is no chat and no Discord integration. The only emails are the two described under Notifications.
+Officers only. Non-officer members do not use the app (RSVPs happen through a Google Form). There is no chat and no Discord integration. There is no email; notifications are in-app only.
 
 ## Deadline and scope
 
@@ -27,7 +27,6 @@ First push by 10pm tonight; finished by 10am tomorrow. Every component is built 
 | Files | Shared drive as the root; `drive` scope | Shared drive owns the files, so no ownership transfer |
 | Calendar | Calendar scope, admin's token | One club calendar shared with officers |
 | Forms and Sheets | APIs on app-created files | RSVP form and sign-in sheet per event |
-| Email | Resend, verified club domain | Only two email types (below) |
 
 Rules that follow:
 
@@ -35,7 +34,7 @@ Rules that follow:
 - Removing an officer is one permission change on the shared drive and one calendar share.
 - Until Google verifies the app, only 100 test users can sign in. That is fine for the pilot.
 - RSVP counts and sign-in attendance are fetched from Google when an event or metrics page opens, cached 5 minutes, and written to `Attendee`. No Pub/Sub, no scheduler.
-- Times are stored in UTC and shown in the browser's time zone. "Once per day" uses Pacific time for the pilot.
+- Times are stored in UTC and shown in the browser's time zone; task and poll lists use Pacific time for the pilot.
 
 ## Data model
 
@@ -45,12 +44,12 @@ Everything hangs off a Workspace (one per club). Google IDs are stored as refere
 | --- | --- | --- |
 | Workspace | name, school, admin\_user\_id, shared\_drive\_id, calendar\_id, google\_token (encrypted) | One per club |
 | User | email, name, google\_sub | Can belong to several workspaces |
-| Membership | workspace\_id, user\_id, role (admin, officer), title, joined\_at, left\_at, last\_emailed\_on | `last_emailed_on` drives the once-a-day rule |
+| Membership | workspace\_id, user\_id, role (admin, officer), title, joined\_at, left\_at, last\_seen\_at | `title` groups the task list; `last_seen_at` powers "new since your last visit" |
 | Event | title, starts\_at, ends\_at, location, status, template\_id, calendar\_event\_id, drive\_folder\_id, rsvp\_form\_id, signin\_sheet\_id, slides\_id | Created from a template; owns its tasks |
 | EventTemplate | name, task\_items (title, days\_before, role), file\_types (folder, RSVP form, slides, sign-in sheet) | Built by admins; generates tasks and files |
 | Task | title, description, event\_id (optional), due\_at, status, difficulty (easy, medium, hard), is\_prereq, completed\_at, created\_by | Shows on the calendar by `due_at` |
-| TaskAssignee | task\_id, user\_id | Multiple assignees allowed (co-roles) |
-| TaskTag | task\_id, user\_id | Officers to email when a prereq task is done |
+| TaskAssignee | task\_id, user\_id, completed\_at | Multiple assignees allowed (co-roles). Each officer marks only their own part done; admins can mark anyone's. Task status follows: none done → todo, some → in progress, all → done |
+| TaskTag | task\_id, user\_id | Officers notified when a prereq task is done |
 | Poll | question, created\_by, closes\_at, multiple\_choice, results\_visibility (live, after\_vote, after\_close), status | Creator sees non-voters |
 | PollOption / Vote | poll\_id, option\_id, user\_id | One vote per officer, or several options if multiple choice |
 | Attendee | event\_id, email, name, rsvped\_at, attended | Filled from the RSVP form and sign-in sheet |
@@ -61,22 +60,22 @@ Removed from the earlier draft: `TaskDependency` (too technical for a club offic
 
 ## Notifications
 
-**Email (two cases only):**
+In-app only, in the bell on every page. No email.
 
-| Trigger | Who gets it | Rule |
-| --- | --- | --- |
-| A task is assigned to you | Assignee | Only the first assignment each day; later ones that day are silent |
-| A prereq task is marked done | Its tagged officers | Always sent; bypasses the daily limit |
+| Trigger | Who gets it |
+| --- | --- |
+| A task is assigned to you | The new assignee, unless they assigned themselves |
+| A prereq task becomes done | Its tagged officers |
+| A poll opens / is closing soon | Officers (closing: those who haven't voted) |
+| An event reaches its RSVP target | Officers |
 
-Nobody is emailed about a task they created and assigned to themselves.
-
-**In-app only** (bell and dashboard badges): new tasks since your last visit, poll opened, poll closing soon, overdue tasks, event in 48 hours, RSVP target reached. There is no digest and no weekly summary.
+The task page also shows tasks created since your last visit. Overdue tasks are shown in red in the task list rather than notified. "Event in 48 hours" is not built. There is no digest and no weekly summary.
 
 ## Build order
 
 1. **Foundation**: Google sign-in, create a workspace, admin connects Google, create or pick the shared drive, invite officers, roles.
    - Done when: an admin sets up a club and three officers join.
-2. **Tasks**: create, multiple assignees, due dates, status, difficulty, `is_prereq` with tagged officers, list and board views, the two emails, "new since last visit."
+2. **Tasks**: create, multiple assignees, due dates, status, difficulty, `is_prereq` with tagged officers, per-assignee completion, a list grouped by event then officer title, a board view, in-app notifications, "new since last visit."
    - Done when: a club runs a real week of officer tasks.
 3. **Calendar**: events, shared Google Calendar, task due dates on the calendar, an event page with its tasks.
    - Done when: officers see club events in their own Google Calendar without doing anything.
@@ -99,10 +98,11 @@ List any unfinished piece from the build order here.
 - No non-officer usage.
 - Templates are built by the club from day one: an editable task list plus a file-type checklist, with no arbitrary uploads.
 - No Discord. Adoption comes from the Google Calendar sync, which puts events where officers already look.
+- No email (Oct 17): notifications are in-app only, so Resend and the once-a-day rule are gone.
 
 ## Open risks
 
 - [x] Verify `drive.file` works against a shared drive the app didn't create. Result: it can create files there but can't read the drive or manage its members, so officer sharing failed. Switched to the full `drive` scope (restricted: fine for test users, needs Google's security review to go public).
 - [ ] Calendar is a sensitive scope: fine for 100 test users, needs Google verification beyond the pilot.
 - [ ] The cached 5-minute refresh means RSVP-target badges can lag; acceptable for the pilot.
-- [ ] Once-a-day email silences later same-day assignments. "New since last visit" in the app is the safety net; revisit if officers miss tasks.
+- [ ] With no email, officers only see assignments when they open the app. Revisit if officers miss tasks.

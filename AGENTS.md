@@ -90,7 +90,7 @@ Club Ops App for student club officers. Spec: `Club Ops App — Data Model & MVP
 - Before pushing: `git pull --rebase origin main`. Work on your own branch (`<name>/<module>`).
 - Design: mostly white, flat, minimal. Buttons are rounded pills with a 1px black border and no shadow, gradient, shine or accent color. Use the shared components in `components/ui/` (owned by Kaung) and don't style your own lookalikes. See "Design" in `TEAM_PLAN.md`.
 - Never edit `components/ui/` unless the user is Kaung.
-- Scope: do what the spec says in its thin form. Email is sent only in the two cases in the spec. No Discord, no digest, no weekly summary, no task dependencies.
+- Scope: do what the spec says in its thin form. No email: notifications are in-app only (the bell). No Discord, no digest, no weekly summary, no task dependencies.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
