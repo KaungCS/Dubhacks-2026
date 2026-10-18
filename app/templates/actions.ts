@@ -103,13 +103,13 @@ export async function actionCreateTemplate(form: {
     form.fileTypeConfigs,
   );
 
-  const template = await createTemplate({
+  await createTemplate({
     workspaceId: workspace.id,
     name: form.name,
     taskItems: form.taskItems,
     fileTypeConfigs,
   });
-  redirect(`/templates/${template.id}`);
+  redirect("/templates");
 }
 
 export async function actionUpdateTemplate(form: {
@@ -129,7 +129,7 @@ export async function actionUpdateTemplate(form: {
     taskItems: form.taskItems,
     fileTypeConfigs,
   });
-  redirect(`/templates/${form.templateId}`);
+  redirect("/templates");
 }
 
 export async function actionDeleteTemplate(fd: FormData) {
