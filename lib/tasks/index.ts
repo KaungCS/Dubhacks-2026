@@ -1,7 +1,7 @@
 import { getDb, type Task, type TablesInsert, type TablesUpdate } from '@/lib/db'
 import { listEvents } from '@/lib/events'
 import { createNotification } from '@/lib/notifications'
-import { canSetCompletion, deriveStatus, type Actor, type Assignee, type Status } from './rules'
+import { canSetCompletion, deriveStatus, PREREQ_COOLDOWN_MS, type Actor, type Assignee, type Status } from './rules'
 
 export type NewTask = TablesInsert<'tasks'> & { assignee_ids?: string[]; tag_ids?: string[] }
 export type TaskWithPeople = Task & { assignees: Assignee[]; tags: { user_id: string }[] }
@@ -86,17 +86,27 @@ export async function listOfficers(workspaceId: string): Promise<Officer[]> {
 // Every event of the club, for the event picker and group headers.
 export const allEvents = (workspaceId: string) => listEvents(workspaceId, new Date(0), new Date('9999-12-31'))
 
-// Sets status and completed_at; a prereq becoming done notifies its tagged officers.
+// Sets status and completed_at; a prereq becoming done notifies its tagged officers, at most once per
+// cooldown. The cooldown check and the claim are one UPDATE, so two quick confirms can't both send.
 async function setStatus(task: TaskWithPeople, status: Status) {
   if (task.status === status) return
-  const { error } = await getDb()
+  const db = getDb()
+  const { error } = await db
     .from('tasks')
     .update({ status, completed_at: status === 'done' ? new Date().toISOString() : null })
     .eq('id', task.id)
   if (error) throw error
-  if (status === 'done' && task.is_prereq) {
-    await Promise.all(task.tags.map((t) => createNotification(t.user_id, 'prereq_done', { taskId: task.id, title: task.title })))
-  }
+  if (status !== 'done' || !task.is_prereq || task.tags.length === 0) return
+  const cutoff = new Date(Date.now() - PREREQ_COOLDOWN_MS).toISOString()
+  const { data: claimed, error: claimError } = await db
+    .from('tasks')
+    .update({ prereq_notified_at: new Date().toISOString() })
+    .eq('id', task.id)
+    .or(`prereq_notified_at.is.null,prereq_notified_at.lt."${cutoff}"`)
+    .select('id')
+  if (claimError) throw claimError
+  if (claimed.length === 0) return
+  await Promise.all(task.tags.map((t) => createNotification(t.user_id, 'prereq_done', { taskId: task.id, title: task.title })))
 }
 
 // Re-derives an assigned task's status from its assignees' checkboxes.
