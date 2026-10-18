@@ -22,3 +22,13 @@ export const isValidVote = (chosen: string[], optionIds: string[], multipleChoic
 const DAY = 24 * 60 * 60 * 1000
 export const isClosingSoon = (poll: PollTiming, now = Date.now()) =>
   isOpen(poll, now) && !!poll.closes_at && Date.parse(poll.closes_at) - now < DAY
+
+// Editing a poll's options: a label that's still there keeps its option (and its votes); the new list sets the order.
+export function diffOptions(existing: { id: string; label: string }[], labels: string[]) {
+  const byLabel = new Map(existing.map((o) => [o.label, o.id]))
+  return {
+    remove: existing.filter((o) => !labels.includes(o.label)).map((o) => o.id),
+    keep: labels.flatMap((label, position) => (byLabel.has(label) ? [{ id: byLabel.get(label)!, position }] : [])),
+    add: labels.flatMap((label, position) => (byLabel.has(label) ? [] : [{ label, position }])),
+  }
+}

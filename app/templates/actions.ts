@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { requireMembership } from "@/lib/auth";
-import { createTemplate, updateTemplate } from "@/lib/events";
+import { createTemplate, deleteTemplate, updateTemplate } from "@/lib/events";
 import {
   DUPLICATABLE_FILE_TYPES,
   FILE_TYPE_EXPECT_KIND,
@@ -142,6 +142,12 @@ export async function actionUpdateTemplate(form: {
     fileTypeConfigs,
   });
   redirect(`/templates/${form.templateId}`);
+}
+
+export async function actionDeleteTemplate(fd: FormData) {
+  const { workspace } = await requireMembership();
+  await deleteTemplate(workspace.id, String(fd.get("id")));
+  redirect("/templates");
 }
 
 /** Validate a Google source link without saving (optional UX helper). */

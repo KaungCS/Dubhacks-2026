@@ -3,11 +3,13 @@
 export { getEvent } from "./get-event";
 export { listEvents } from "./list-events";
 export { createEventFromTemplate } from "./create-from-template";
+export { deleteEvent } from "./delete-event";
 export {
   listTemplates,
   getTemplate,
   createTemplate,
   updateTemplate,
+  deleteTemplate,
 } from "./templates";
 export {
   eventLinks,

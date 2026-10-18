@@ -93,3 +93,14 @@ export async function updateTemplate(
   if (error) throw new Error(`updateTemplate failed: ${error.message}`);
   return mapTemplate(data);
 }
+
+/** Events made from this template keep existing; their template_id is cleared (on delete set null). */
+export async function deleteTemplate(workspaceId: string, templateId: string): Promise<void> {
+  const { error } = await getDb()
+    .from("event_templates")
+    .delete()
+    .eq("id", templateId)
+    .eq("workspace_id", workspaceId);
+
+  if (error) throw new Error(`deleteTemplate failed: ${error.message}`);
+}

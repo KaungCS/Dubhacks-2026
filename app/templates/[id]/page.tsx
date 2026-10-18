@@ -2,7 +2,8 @@ import Link from "next/link";
 import { requireMembership } from "@/lib/auth";
 import { getTemplate } from "@/lib/events";
 import { TemplateEditor } from "@/components/events/template-editor";
-import { actionUpdateTemplate } from "../actions";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { actionDeleteTemplate, actionUpdateTemplate } from "../actions";
 
 type Params = Promise<{ id: string }>;
 
@@ -52,7 +53,13 @@ export default async function EditTemplatePage({ params }: { params: Params }) {
           {" / "}
           {template.name}
         </p>
-        <h1 className="text-2xl font-semibold">Edit template</h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl font-semibold">Edit template</h1>
+          <form action={actionDeleteTemplate}>
+            <input type="hidden" name="id" value={id} />
+            <ConfirmButton message={`Delete "${template.name}"? Events made from it stay.`}>Delete</ConfirmButton>
+          </form>
+        </div>
         <p className="text-sm text-neutral-600">
           Scroll to <span className="font-medium text-black">Duplicate from Google link</span>{" "}
           to paste Form / Slides / Sheet URLs. Those files are copied into each
