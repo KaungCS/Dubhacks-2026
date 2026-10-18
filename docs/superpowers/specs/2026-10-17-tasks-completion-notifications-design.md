@@ -20,7 +20,7 @@ Branch `kaung/tasks` from `origin/main`. Its first commit is `77bdf11` cherry-pi
 
 ## Completion rules
 
-- Each assignee has their own checkbox. An officer may toggle only their own; an admin may toggle any assignee's.
+- Each assignee has their own checkbox. Officers can set completion only on their own assignments (their own checkbox on tasks assigned to them). Only admins can set completion for everyone else.
 - `tasks.status` is derived, never set directly: no assignee done → `todo`, some → `in_progress`, all → `done`. `tasks.completed_at` is set when the task becomes `done` and cleared when it leaves `done`.
 - A task with no assignees has one task-level checkbox; only admins may toggle it (`todo` ↔ `done`).
 - The status dropdown is removed from the task form.
@@ -71,6 +71,6 @@ Spec, `TEAM_PLAN.md`, `AGENTS.md` and README: "two emails" becomes "in-app notif
 
 ## Risks and assumptions
 
-- Unassigned tasks (including all template tasks today) can only be completed by an admin.
+- Unassigned tasks (including all template tasks today) belong to no officer, so only an admin can complete them.
 - Partially ticked tasks show as `in_progress`; an assignee who started but hasn't ticked still shows `todo`.
 - A Vercel preview of the first commit alone fails to build (Jackson's code predates `components/ui`); later commits fix it.
