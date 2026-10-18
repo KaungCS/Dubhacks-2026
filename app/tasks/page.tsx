@@ -1,92 +1,47 @@
-import Link from "next/link";
-import { cookies } from "next/headers";
-import { requireMembership } from "@/lib/auth";
-import { listTasks, listTasksSince } from "@/lib/tasks";
-import { countUnreadNotifications } from "@/lib/notifications";
-import { TaskList } from "@/components/tasks/task-list";
-import { TaskBoard } from "@/components/tasks/task-board";
-import { ViewToggle } from "@/components/tasks/view-toggle";
-import { NewSinceLastVisit } from "@/components/tasks/new-since-last-visit";
-import { TouchLastVisit } from "@/components/tasks/touch-last-visit";
-import { NotificationBell } from "@/components/notifications/notification-bell";
+import Link from 'next/link'
+import { buttonClass, Page } from '@/components/ui'
+import { NewSinceLastVisit } from '@/components/tasks/new-since-last-visit'
+import { TaskBoard } from '@/components/tasks/task-board'
+import { TaskList } from '@/components/tasks/task-list'
+import { requireMembership } from '@/lib/auth'
+import { allEvents, listOfficers, listTasks, markTasksSeen } from '@/lib/tasks'
+import { groupTasks } from '@/lib/tasks/rules'
 
-const LAST_VISIT_COOKIE = "clubops_tasks_last_visit";
+export default async function TasksPage({ searchParams }: PageProps<'/tasks'>) {
+  const { user, membership, workspace } = await requireMembership()
+  const board = (await searchParams).view === 'board'
+  const [tasks, events, officers] = await Promise.all([listTasks(workspace.id), allEvents(workspace.id), listOfficers(workspace.id)])
 
-type SearchParams = Promise<{ workspaceId?: string; view?: string }>;
-
-export default async function TasksPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  const params = await searchParams;
-  const workspaceId = params.workspaceId;
-  const view = params.view === "board" ? "board" : "list";
-
-  if (!workspaceId) {
-    return (
-      <main className="mx-auto max-w-3xl px-6 py-10">
-        <h1 className="text-2xl font-medium text-black">Tasks</h1>
-        <p className="mt-2 text-sm text-neutral-600">
-          Missing <code>workspaceId</code> query param.
-        </p>
-      </main>
-    );
-  }
-
-  const { user } = await requireMembership(workspaceId);
-
-  const jar = await cookies();
-  const raw = jar.get(LAST_VISIT_COOKIE)?.value;
-  const lastVisit = raw ? new Date(raw) : null;
-  const since =
-    lastVisit && !Number.isNaN(lastVisit.getTime()) ? lastVisit : null;
-
-  let tasks = [] as Awaited<ReturnType<typeof listTasks>>;
-  let newTasks = [] as Awaited<ReturnType<typeof listTasksSince>>;
-  let unread = 0;
-  let loadError: string | null = null;
-
-  try {
-    const [taskRows, unreadCount] = await Promise.all([
-      listTasks(workspaceId),
-      countUnreadNotifications(user.id),
-    ]);
-    tasks = taskRows;
-    unread = unreadCount;
-    if (since) {
-      newTasks = await listTasksSince(workspaceId, since);
-    }
-  } catch (err) {
-    loadError = err instanceof Error ? err.message : "Failed to load tasks";
-  }
+  const since = membership.last_seen_at ? Date.parse(membership.last_seen_at) : null
+  await markTasksSeen(membership.id)
+  const fresh = since ? tasks.filter((t) => Date.parse(t.created_at) > since && t.created_by !== user.id) : []
+  const titles = new Map(officers.map((o) => [o.id, o.title]))
+  const names = new Map(officers.map((o) => [o.id, o.name]))
 
   return (
-    <main className="mx-auto max-w-5xl space-y-6 px-6 py-10">
-      <TouchLastVisit />
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-medium text-black">Tasks</h1>
-        <div className="flex flex-wrap items-center gap-2">
-          <NotificationBell userId={user.id} initialUnreadCount={unread} />
-          <ViewToggle workspaceId={workspaceId} view={view} />
-          <Link
-            href={`/tasks/new?workspaceId=${workspaceId}`}
-            className="rounded-full border border-black bg-white px-4 py-2 text-sm text-black hover:bg-black hover:text-white"
-          >
+    <Page
+      title="Tasks"
+      actions={
+        <div className="flex gap-2">
+          <Link className={buttonClass} href={board ? '/tasks' : '/tasks?view=board'}>
+            {board ? 'List view' : 'Board view'}
+          </Link>
+          <Link className={buttonClass} href="/tasks/new">
             New task
           </Link>
         </div>
-      </div>
-
-      <NewSinceLastVisit workspaceId={workspaceId} tasks={newTasks} />
-
-      {loadError ? <p className="text-sm text-red-600">{loadError}</p> : null}
-
-      {view === "board" ? (
-        <TaskBoard workspaceId={workspaceId} tasks={tasks} />
+      }
+    >
+      <NewSinceLastVisit tasks={fresh} />
+      {board ? (
+        <TaskBoard tasks={tasks} />
       ) : (
-        <TaskList workspaceId={workspaceId} tasks={tasks} />
+        <TaskList
+          groups={groupTasks(tasks, events, (id) => titles.get(id) ?? null)}
+          names={names}
+          viewer={{ id: user.id, isAdmin: membership.role === 'admin' }}
+        />
       )}
-    </main>
-  );
+    </Page>
+  )
 }

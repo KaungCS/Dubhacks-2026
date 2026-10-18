@@ -1,164 +1,116 @@
-"use client";
+'use client'
 
-import { useEffect, useRef, useState, useTransition } from "react";
-import type { Notification } from "@/lib/notifications";
-import {
-  actionListNotifications,
-  actionMarkAllNotificationsRead,
-  actionMarkNotificationRead,
-} from "@/app/tasks/actions";
+import Link from 'next/link'
+import { useEffect, useRef, useState, useTransition } from 'react'
+import { buttonClass } from '@/components/ui'
+import type { Notification } from '@/lib/notifications'
+import { listMyNotifications, markReadAction } from './actions'
 
-type Props = {
-  userId: string;
-  initialUnreadCount?: number;
-};
-
-function labelFor(n: Notification): string {
-  const title =
-    typeof n.payload.title === "string" ? n.payload.title : undefined;
-  switch (n.kind) {
-    case "task_assigned":
-      return title ? `Assigned: ${title}` : "New task assigned";
-    case "prereq_done":
-      return title ? `Prereq done: ${title}` : "Prerequisite task done";
-    case "event_created":
-      return title ? `Event: ${title}` : "Event created";
-    case "poll_opened":
-      return title ? `Poll: ${title}` : "Poll opened";
-    case "poll_closing":
-      return title ? `Poll closing: ${title}` : "Poll closing soon";
-    case "rsvp_target":
-      return title ? `RSVP target: ${title}` : "RSVP target reached";
-    default:
-      return title ?? n.kind;
-  }
+const LABELS: Record<string, string> = {
+  task_assigned: 'Assigned to you',
+  prereq_done: 'Prereq done',
+  event_created: 'Event created',
+  poll_opened: 'New poll',
+  poll_closing: 'Poll closing soon',
+  rsvp_target: 'RSVP target reached',
 }
 
-/**
- * In-app notification bell. Kaung can mount this in the app shell layout;
- * also usable on the tasks page until then.
- */
-export function NotificationBell({ userId, initialUnreadCount = 0 }: Props) {
-  const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<Notification[]>([]);
-  const [unread, setUnread] = useState(initialUnreadCount);
-  const [pending, startTransition] = useTransition();
-  const rootRef = useRef<HTMLDivElement>(null);
+const field = (n: Notification, key: string) => {
+  const value = (n.payload as Record<string, unknown> | null)?.[key]
+  return typeof value === 'string' ? value : ''
+}
+
+function labelFor(n: Notification) {
+  const name = field(n, 'title') || field(n, 'question')
+  const label = LABELS[n.kind] ?? n.kind
+  return name ? `${label}: ${name}` : label
+}
+
+function hrefFor(n: Notification) {
+  if (field(n, 'taskId')) return `/tasks/${field(n, 'taskId')}`
+  if (field(n, 'eventId')) return `/events/${field(n, 'eventId')}`
+  if (field(n, 'pollId')) return '/polls'
+  return null
+}
+
+export function NotificationMenu({ initialUnread }: { initialUnread: number }) {
+  const [open, setOpen] = useState(false)
+  const [items, setItems] = useState<Notification[] | null>(null)
+  const [unread, setUnread] = useState(initialUnread)
+  const [, startTransition] = useTransition()
+  const root = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    function onDocClick(e: MouseEvent) {
-      if (!rootRef.current?.contains(e.target as Node)) {
-        setOpen(false);
-      }
+    if (!open) return
+    const onClick = (e: MouseEvent) => !root.current?.contains(e.target as Node) && setOpen(false)
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    document.addEventListener('mousedown', onClick)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onClick)
+      document.removeEventListener('keydown', onKey)
     }
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, []);
-
-  function load() {
-    startTransition(async () => {
-      const list = await actionListNotifications(userId);
-      setItems(list);
-      setUnread(list.filter((n) => !n.readAt).length);
-    });
-  }
+  }, [open])
 
   function toggle() {
-    const next = !open;
-    setOpen(next);
-    if (next) load();
+    setOpen(!open)
+    if (open) return
+    startTransition(async () => {
+      const list = await listMyNotifications()
+      setItems(list)
+      setUnread(list.filter((n) => !n.read_at).length)
+    })
   }
 
-  function markOne(id: string) {
-    startTransition(async () => {
-      await actionMarkNotificationRead(id);
-      setItems((prev) =>
-        prev.map((n) =>
-          n.id === id ? { ...n, readAt: new Date().toISOString() } : n,
-        ),
-      );
-      setUnread((c) => Math.max(0, c - 1));
-    });
-  }
-
-  function markAll() {
-    startTransition(async () => {
-      await actionMarkAllNotificationsRead(userId);
-      setItems((prev) =>
-        prev.map((n) => ({
-          ...n,
-          readAt: n.readAt ?? new Date().toISOString(),
-        })),
-      );
-      setUnread(0);
-    });
+  function markRead(id?: string) {
+    const now = new Date().toISOString()
+    setItems((list) => list?.map((n) => (!id || n.id === id ? { ...n, read_at: n.read_at ?? now } : n)) ?? null)
+    setUnread((count) => (id ? Math.max(0, count - 1) : 0))
+    startTransition(() => markReadAction(id))
   }
 
   return (
-    <div ref={rootRef} className="relative">
-      <button
-        type="button"
-        onClick={toggle}
-        aria-label="Notifications"
-        className="relative rounded-full border border-black bg-white px-4 py-2 text-sm text-black hover:bg-black hover:text-white"
-      >
-        Bell
-        {unread > 0 ? (
-          <span className="ml-2 inline-block min-w-5 rounded-full border border-black px-1.5 text-xs">
-            {unread > 99 ? "99+" : unread}
-          </span>
-        ) : null}
+    <div ref={root} className="relative">
+      <button type="button" onClick={toggle} aria-expanded={open} className={buttonClass}>
+        Notifications{unread > 0 && ` (${unread > 99 ? '99+' : unread})`}
       </button>
-
-      {open ? (
-        <div className="absolute right-0 z-20 mt-2 w-80 border border-black bg-white">
-          <div className="flex items-center justify-between border-b border-neutral-200 px-3 py-2">
-            <p className="text-sm font-medium text-black">Notifications</p>
-            <button
-              type="button"
-              onClick={markAll}
-              disabled={pending || unread === 0}
-              className="text-xs text-neutral-600 underline-offset-2 hover:underline disabled:opacity-40"
-            >
+      {open && (
+        <div className="absolute right-0 z-20 mt-2 w-80 rounded-2xl border border-neutral-200 bg-white">
+          <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-2 text-sm">
+            <span className="font-semibold">Notifications</span>
+            <button type="button" onClick={() => markRead()} disabled={unread === 0} className="text-neutral-500 hover:underline disabled:opacity-40">
               Mark all read
             </button>
           </div>
-          <ul className="max-h-80 overflow-y-auto">
-            {items.length === 0 ? (
-              <li className="px-3 py-6 text-center text-sm text-neutral-500">
-                {pending ? "Loading…" : "No notifications"}
-              </li>
-            ) : (
-              items.map((n) => (
-                <li
-                  key={n.id}
-                  className={
-                    n.readAt
-                      ? "border-b border-neutral-100 px-3 py-2"
-                      : "border-b border-neutral-100 bg-neutral-50 px-3 py-2"
-                  }
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!n.readAt) markOne(n.id);
-                    }}
-                    className="w-full text-left"
-                  >
-                    <p className="text-sm text-black">{labelFor(n)}</p>
-                    <p className="mt-0.5 text-xs text-neutral-500">
-                      {new Date(n.createdAt).toLocaleString(undefined, {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
-                    </p>
-                  </button>
+          <ul className="max-h-80 overflow-y-auto text-sm">
+            {items === null && <li className="px-4 py-6 text-center text-neutral-500">Loading…</li>}
+            {items?.length === 0 && <li className="px-4 py-6 text-center text-neutral-500">No notifications</li>}
+            {items?.map((n) => {
+              const href = hrefFor(n)
+              const read = () => !n.read_at && markRead(n.id)
+              const body = (
+                <>
+                  <p className={n.read_at ? 'text-neutral-500' : 'font-medium'}>{labelFor(n)}</p>
+                  <p className="text-xs text-neutral-500">{new Date(n.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                </>
+              )
+              return (
+                <li key={n.id} className="border-b border-neutral-100 last:border-0">
+                  {href ? (
+                    <Link href={href} onClick={() => (read(), setOpen(false))} className="block px-4 py-2 hover:bg-neutral-50">
+                      {body}
+                    </Link>
+                  ) : (
+                    <button type="button" onClick={read} className="block w-full px-4 py-2 text-left hover:bg-neutral-50">
+                      {body}
+                    </button>
+                  )}
                 </li>
-              ))
-            )}
+              )
+            })}
           </ul>
         </div>
-      ) : null}
+      )}
     </div>
-  );
+  )
 }

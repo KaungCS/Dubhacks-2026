@@ -14,7 +14,7 @@ Deadline: **first push by 10pm tonight, finished by 10am tomorrow.**
 
 ## Setup (Kaung does this)
 
-Kaung creates the Google Cloud OAuth client, one **shared** Supabase project, the Resend key (club domain), and the Vercel project, and shares the `.env.local` values with the team privately (never in the repo).
+Kaung creates the Google Cloud OAuth client, one **shared** Supabase project, and the Vercel project, and shares the `.env.local` values with the team privately (never in the repo).
 
 - Everyone connects to the same Supabase project. **Only Kaung applies migrations**; nobody else runs them.
 - Test data is shared, so prefix your test rows with your name (e.g. "jun: test event").
@@ -24,8 +24,8 @@ Kaung creates the Google Cloud OAuth client, one **shared** Supabase project, th
 
 | Person | Builds | Owns (only touch these) |
 | --- | --- | --- |
-| **Kaung** | Foundation: scaffold, schema, sign-in, workspaces, officers and roles, Google token service | `app/(auth)/`, `app/settings/`, `app/layout.tsx`, `lib/db/`, `lib/auth/`, `lib/nav.ts`, `lib/google/client.ts`, `components/ui/`, `supabase/` |
-| **Jackson** | Tasks, the two emails, in-app notification bell | `app/tasks/`, `lib/tasks/`, `lib/email/`, `lib/notifications/`, `components/tasks/`, `components/notifications/` |
+| **Kaung** | Foundation: scaffold, schema, sign-in, workspaces, officers and roles, Google token service. Tasks and in-app notifications (took over from Jackson) | `app/(auth)/`, `app/settings/`, `app/layout.tsx`, `lib/db/`, `lib/auth/`, `lib/nav.ts`, `lib/google/client.ts`, `components/ui/`, `supabase/`, `app/tasks/`, `lib/tasks/`, `lib/notifications/`, `components/tasks/`, `components/notifications/` |
+| **Jackson** | First version of tasks and the notification bell, merged through `kaung/tasks` | none now; ask Kaung before changing tasks or notifications |
 | **Jun** | Calendar, events, templates | `app/calendar/`, `app/events/`, `app/templates/`, `lib/events/`, `lib/google/calendar.ts`, `lib/google/drive.ts`, `components/events/` |
 | **Dom** | Polls, RSVP and attendance, metrics | `app/polls/`, `app/metrics/`, `lib/polls/`, `lib/attendance/`, `lib/google/forms.ts`, `lib/google/sheets.ts`, `components/polls/` |
 
@@ -45,7 +45,7 @@ The goal is for officers to focus on the task and not be annoyed. Everyone follo
 Everyone else: until this lands on `main`, read the plan and sketch UI, but don't create the project.
 
 Kaung pushes one commit containing:
-- Next.js (App Router, TypeScript), Tailwind, Supabase client, `googleapis`, `resend`.
+- Next.js (App Router, TypeScript), Tailwind, Supabase client, `googleapis`.
 - The complete Supabase schema for every table in the spec, as migrations, plus generated TypeScript types in `lib/db/types.ts`.
 - `lib/nav.ts` with every route already listed (Tasks, Calendar, Events, Templates, Polls, Metrics, Settings), so nobody edits navigation.
 - `components/ui/` with the design above already implemented: pill `Button` (and a pill-shaped `Input`/`Select` where it fits), plain `Card`, page layout with white background. Tailwind config set up so no shadow or gradient utilities are used.
@@ -75,13 +75,13 @@ How to use them:
 - The club's Drive root is `workspace.shared_drive_id`: a shared drive, or a regular folder for admins on personal Gmail, which can't make shared drives. Create files with `parents: [id]` and `supportsAllDrives: true`; that works for both. The club calendar is `workspace.calendar_id`.
 - The bell: `components/notifications/Bell.tsx` exports `NotificationBell`, which `app/layout.tsx` renders on every page.
 
-Tasks and notifications (Jackson), used by Jun and Dom:
+Tasks and notifications (Kaung, from Jackson's first version), used by Jun and Dom:
 
 ```ts
 // lib/notifications
-createNotification(userId: string, kind: string, payload: object): Promise<void>   // in-app bell
+createNotification(userId: string, kind: string, payload: object): Promise<void>   // in-app bell; logs, never throws
 // lib/tasks
-createTask(input: NewTask): Promise<Task>          // handles assignees, tagged officers, the once-a-day email
+createTask(input: NewTask): Promise<Task>          // handles assignees, tagged officers, in-app assignment notifications
 listTasksForCalendar(workspaceId: string, from: Date, to: Date): Promise<Task[]>
 ```
 
@@ -104,7 +104,7 @@ createSignInSheet(workspaceId: string, event: Event): Promise<{ sheetId: string;
 getEventAttendance(eventId: string): Promise<{ rsvps: number; attended: number }>   // fetch from Google, cache 5 min
 ```
 
-Jun's "create event from template" calls `createTask` (Jackson) for each template item and `createRsvpForm` / `createSignInSheet` (Dom) for the checked file types. Until those are real, the stubs return fake ids.
+Jun's "create event from template" calls `createTask` (tasks module) for each template item and `createRsvpForm` / `createSignInSheet` (Dom) for the checked file types. Until those are real, the stubs return fake ids.
 
 ## Kaung: Foundation
 
@@ -117,16 +117,14 @@ Spec phase 1. Done when an admin sets up a club and three officers join.
 6. Real `getGoogleClient`, `requireUser`, `requireMembership`.
 7. Then: integration, deploy to Vercel, bug triage for everyone.
 
-## Jackson: Tasks
+## Tasks (Jackson's first version, finished by Kaung)
 
-Spec phase 2. Done when a club can run a real week of tasks.
-1. Create, edit, status, due date, `difficulty` (easy, medium, hard), `is_prereq`, multiple assignees, tagged officers.
-2. List view and board view.
-3. Email, via Resend, **only two cases**:
-   - A task assigned to you, only the first assignment each day (`membership.last_emailed_on`, Pacific date). Don't email someone about a task they created and assigned to themselves.
-   - A prereq task marked done emails its tagged officers. Always sent; bypasses the daily limit.
-4. In-app notification bell and "new since your last visit" on the dashboard. Implement `createNotification` early; Jun and Dom call it.
-5. Implement `createTask` and `listTasksForCalendar` early; Jun calls them.
+Spec phase 2. Done when a club can run a real week of tasks. Design: `docs/superpowers/specs/2026-10-17-tasks-completion-notifications-design.md`.
+1. Create, edit, due date, `difficulty` (easy, medium, hard), `is_prereq`, multiple assignees, tagged officers, optional event.
+2. Each assignee marks their own part done; admins can mark anyone's. Status follows the checkboxes.
+3. List view grouped by event, then by assignee title; board view.
+4. In-app notifications only (no email): task assigned, prereq done. Bell on every page and "new since your last visit" on the tasks page.
+5. `createTask`, `listTasksForCalendar` and `createNotification` keep their contract signatures for Jun and Dom.
 
 ## Jun: Calendar, events, templates
 

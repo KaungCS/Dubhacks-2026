@@ -20,7 +20,7 @@ Checks before pushing: `npm run lint`, `npm run build`, `npm test`.
 
 ## Stack
 
-Next.js 16 (App Router, TypeScript), Tailwind 4, Supabase (Auth + Postgres), `googleapis`, Resend.
+Next.js 16 (App Router, TypeScript), Tailwind 4, Supabase (Auth + Postgres), `googleapis`.
 
 - Database schema: `supabase/migrations/`. Only Kaung applies migrations. Types: `lib/db/types.ts`.
 - Data access: `getDb()` from `@/lib/db` (server only, bypasses RLS). Always call `requireMembership()` from `@/lib/auth` first and filter by its `workspace.id`.
