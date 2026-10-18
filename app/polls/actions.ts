@@ -1,5 +1,6 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { requireMembership } from '@/lib/auth'
 import { closePoll, createPoll, deletePoll, updatePoll, vote, type NewPoll } from '@/lib/polls'
@@ -30,6 +31,7 @@ export async function createPollAction(fd: FormData) {
   const input = await readPollForm(fd, '/polls?')
   if (input.closesAt && Date.parse(input.closesAt) <= Date.now()) redirect('/polls?error=closes')
   await createPoll(input)
+  revalidatePath('/polls')
   redirect('/polls')
 }
 
@@ -37,12 +39,14 @@ export async function createPollAction(fd: FormData) {
 export async function updatePollAction(fd: FormData) {
   const id = String(fd.get('id'))
   await updatePoll(id, await readPollForm(fd, `/polls?edit=${id}&`))
+  revalidatePath('/polls')
   redirect('/polls')
 }
 
 export async function deletePollAction(fd: FormData) {
   const { user, workspace } = await requireMembership()
   await deletePoll(workspace.id, String(fd.get('id')), user.id)
+  revalidatePath('/polls')
   redirect('/polls')
 }
 
@@ -50,11 +54,13 @@ export async function voteAction(fd: FormData) {
   const { user, workspace } = await requireMembership()
   const chosen = fd.getAll('option').map(String)
   if (chosen.length) await vote(workspace.id, String(fd.get('id')), user.id, chosen)
+  revalidatePath('/polls')
   redirect('/polls')
 }
 
 export async function closePollAction(fd: FormData) {
   const { user, workspace } = await requireMembership()
   await closePoll(workspace.id, String(fd.get('id')), user.id)
+  revalidatePath('/polls')
   redirect('/polls')
 }
