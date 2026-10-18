@@ -62,7 +62,7 @@ export default async function EditTemplatePage({ params }: { params: Params }) {
         </div>
         <p className="text-sm text-neutral-600">
           Scroll to <span className="font-medium text-black">Duplicate from Google link</span>{" "}
-          to paste Form / Slides / Sheet URLs. Those files are copied into each
+          to paste Form / Slides / Sheet / Doc URLs. Those files are copied into each
           new event&apos;s Drive folder.
         </p>
       </div>
