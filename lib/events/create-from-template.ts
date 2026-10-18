@@ -1,4 +1,4 @@
-import { getDb, type Event } from "@/lib/db";
+import { getDb, type Event, type TablesUpdate } from "@/lib/db";
 import { createTask } from "@/lib/tasks";
 import { createNotification } from "@/lib/notifications";
 import { createRsvpForm } from "@/lib/google/forms";
@@ -45,7 +45,7 @@ export async function createEventFromTemplate(
   if (error) throw new Error(`createEventFromTemplate insert failed: ${error.message}`);
 
   let event: Event = data;
-  const updates: Record<string, string | null> = {};
+  const updates: TablesUpdate<"events"> = {};
   const fileTypes = new Set(template.file_types);
 
   for (const item of template.task_items) {
