@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireMembership } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { createEventFromTemplate } from "@/lib/events";
 
 export async function actionCreateEventFromTemplate(form: {
@@ -11,7 +11,7 @@ export async function actionCreateEventFromTemplate(form: {
   endsAt: string;
   location: string;
 }) {
-  const { user, workspace } = await requireMembership();
+  const { user, workspace } = await requirePermission("calendar:create");
   const event = await createEventFromTemplate({
     workspaceId: workspace.id,
     templateId: form.templateId,

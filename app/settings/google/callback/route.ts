@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { google } from 'googleapis'
-import { requireMembership } from '@/lib/auth'
+import { requireMembership, memberHasPermission } from '@/lib/auth'
 import { encrypt } from '@/lib/auth/crypto'
 import { getDb } from '@/lib/db'
 import { getGoogleClient, GOOGLE_SCOPES, oauthClient, shareWithAllOfficers } from '@/lib/google/client'
@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   if (!code || !state || state !== (await cookies()).get('google_oauth_state')?.value) redirect('/settings?error=google')
 
   const { user, membership, workspace } = await requireMembership(state.split('.')[0])
-  if (membership.role !== 'admin') redirect('/settings')
+  if (!memberHasPermission(membership, 'settings:manage')) redirect('/settings?error=forbidden')
 
   const { tokens } = await oauthClient().getToken(code)
   const granted = tokens.scope?.split(' ') ?? []

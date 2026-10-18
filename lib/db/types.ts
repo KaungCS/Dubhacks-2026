@@ -163,12 +163,71 @@ export type Database = {
           },
         ]
       }
+      invites: {
+        Row: {
+          id: string
+          workspace_id: string
+          code: string
+          workspace_role_id: string
+          email: string | null
+          created_by: string | null
+          created_at: string
+          accepted_at: string | null
+          revoked_at: string | null
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          code?: string
+          workspace_role_id: string
+          email?: string | null
+          created_by?: string | null
+          created_at?: string
+          accepted_at?: string | null
+          revoked_at?: string | null
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          code?: string
+          workspace_role_id?: string
+          email?: string | null
+          created_by?: string | null
+          created_at?: string
+          accepted_at?: string | null
+          revoked_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invites_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invites_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invites_workspace_role_id_fkey"
+            columns: ["workspace_role_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       memberships: {
         Row: {
           id: string
           workspace_id: string
           user_id: string
           role: Database["public"]["Enums"]["member_role"]
+          workspace_role_id: string | null
           title: string | null
           joined_at: string
           left_at: string | null
@@ -180,6 +239,7 @@ export type Database = {
           workspace_id: string
           user_id: string
           role?: Database["public"]["Enums"]["member_role"]
+          workspace_role_id?: string | null
           title?: string | null
           joined_at?: string
           left_at?: string | null
@@ -191,6 +251,7 @@ export type Database = {
           workspace_id?: string
           user_id?: string
           role?: Database["public"]["Enums"]["member_role"]
+          workspace_role_id?: string | null
           title?: string | null
           joined_at?: string
           left_at?: string | null
@@ -207,6 +268,52 @@ export type Database = {
           },
           {
             foreignKeyName: "memberships_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memberships_workspace_role_id_fkey"
+            columns: ["workspace_role_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_roles: {
+        Row: {
+          id: string
+          workspace_id: string
+          name: string
+          name_normalized: string
+          is_system: boolean
+          is_active: boolean
+          permissions: string[]
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          name: string
+          is_system?: boolean
+          is_active?: boolean
+          permissions?: string[]
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          name?: string
+          is_system?: boolean
+          is_active?: boolean
+          permissions?: string[]
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_roles_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"

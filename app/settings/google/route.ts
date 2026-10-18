@@ -1,13 +1,12 @@
 import { randomUUID } from 'node:crypto'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { requireMembership } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 import { GOOGLE_SCOPES, oauthClient } from '@/lib/google/client'
 
 // Admin clicks "Connect Google": send them to Google's consent screen for the club scopes.
 export async function GET() {
-  const { user, membership, workspace } = await requireMembership()
-  if (membership.role !== 'admin') redirect('/settings')
+  const { user, workspace } = await requirePermission('settings:manage')
   const state = `${workspace.id}.${randomUUID()}`
   ;(await cookies()).set('google_oauth_state', state, { httpOnly: true, sameSite: 'lax', path: '/settings/google', maxAge: 600 })
   redirect(
