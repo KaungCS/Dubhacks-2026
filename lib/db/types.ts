@@ -91,6 +91,7 @@ export type Database = {
           rsvp_form_url: string | null
           signin_sheet_id: string | null
           slides_id: string | null
+          notes_id: string | null
           rsvp_target: number | null
           rsvp_target_notified_at: string | null
           attendance_fetched_at: string | null
@@ -112,6 +113,7 @@ export type Database = {
           rsvp_form_url?: string | null
           signin_sheet_id?: string | null
           slides_id?: string | null
+          notes_id?: string | null
           rsvp_target?: number | null
           rsvp_target_notified_at?: string | null
           attendance_fetched_at?: string | null
@@ -133,6 +135,7 @@ export type Database = {
           rsvp_form_url?: string | null
           signin_sheet_id?: string | null
           slides_id?: string | null
+          notes_id?: string | null
           rsvp_target?: number | null
           rsvp_target_notified_at?: string | null
           attendance_fetched_at?: string | null

@@ -6,7 +6,7 @@ export type { Event };
 export type EventTemplateRow = Tables<"event_templates">;
 
 /** Values stored in event_templates.file_types */
-export type FileTypeKey = "folder" | "rsvp_form" | "slides" | "signin_sheet";
+export type FileTypeKey = "folder" | "rsvp_form" | "slides" | "signin_sheet" | "notes";
 
 /** Optional Google source to duplicate when creating an event from the template. */
 export type FileTypeSource = {
@@ -55,6 +55,7 @@ export type EventLinks = {
   rsvpFormUrl: string | null;
   signinSheetUrl: string | null;
   slidesUrl: string | null;
+  notesUrl: string | null;
 };
 
 export function eventLinks(event: Event): EventLinks {
@@ -72,6 +73,9 @@ export function eventLinks(event: Event): EventLinks {
       : null,
     slidesUrl: event.slides_id
       ? `https://docs.google.com/presentation/d/${event.slides_id}`
+      : null,
+    notesUrl: event.notes_id
+      ? `https://docs.google.com/document/d/${event.notes_id}`
       : null,
   };
 }
@@ -98,6 +102,7 @@ const ALLOWED_FILE_TYPES = new Set<FileTypeKey>([
   "rsvp_form",
   "slides",
   "signin_sheet",
+  "notes",
 ]);
 
 /**
@@ -230,6 +235,7 @@ export const FILE_TYPE_EXPECT_KIND: Partial<Record<FileTypeKey, CopyableGoogleKi
   slides: "presentation",
   signin_sheet: "spreadsheet",
   rsvp_form: "form",
+  notes: "document",
 };
 
 /** File types that accept a Google source link (not folder). */
@@ -237,6 +243,7 @@ export const DUPLICATABLE_FILE_TYPES: FileTypeKey[] = [
   "slides",
   "signin_sheet",
   "rsvp_form",
+  "notes",
 ];
 
 export const ALL_FILE_TYPES: {
@@ -260,4 +267,12 @@ export const ALL_FILE_TYPES: {
     label: "Sign-in sheet",
     sourceHint: "Paste a Google Sheet link (or file id) to duplicate",
   },
+  {
+    key: "notes",
+    label: "Notes",
+    sourceHint: "Paste a Google Doc link (or file id) to duplicate",
+  },
 ];
+
+export const fileTypeLabel = (key: FileTypeKey) =>
+  ALL_FILE_TYPES.find((ft) => ft.key === key)?.label ?? key;

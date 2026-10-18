@@ -41,9 +41,7 @@ export function TemplateEditor({
 }: Props) {
   const initialState = configsToState(initial.fileTypeConfigs);
   const [name, setName] = useState(initial.name);
-  const [taskItems, setTaskItems] = useState<TemplateTaskItem[]>(
-    initial.taskItems.length ? initial.taskItems : [{ ...EMPTY_TASK }],
-  );
+  const [taskItems, setTaskItems] = useState<TemplateTaskItem[]>(initial.taskItems);
   const [fileTypes, setFileTypes] = useState<Set<FileTypeKey>>(
     () => initialState.keys,
   );
@@ -133,6 +131,9 @@ export function TemplateEditor({
             Add task
           </Button>
         </div>
+        {taskItems.length === 0 ? (
+          <p className="text-sm text-neutral-500">No tasks. Events start with an empty task list.</p>
+        ) : null}
         <ul className="space-y-3">
           {taskItems.map((item, index) => (
             <li key={index} className="space-y-2 border border-neutral-200 p-3">
@@ -167,16 +168,14 @@ export function TemplateEditor({
                   />
                 </div>
               </div>
-              {taskItems.length > 1 ? (
-                <Button
-                  type="button"
-                  onClick={() =>
-                    setTaskItems((items) => items.filter((_, i) => i !== index))
-                  }
-                >
-                  Remove
-                </Button>
-              ) : null}
+              <Button
+                type="button"
+                onClick={() =>
+                  setTaskItems((items) => items.filter((_, i) => i !== index))
+                }
+              >
+                Remove
+              </Button>
             </li>
           ))}
         </ul>
@@ -206,7 +205,7 @@ export function TemplateEditor({
             Duplicate from Google link
           </h2>
           <p className="text-sm text-neutral-600">
-            Paste a Google Form, Slides, or Sheet link (or file id) for each type
+            Paste a Google Form, Slides, Sheet, or Doc link (or file id) for each type
             you enable. Creating an event copies that file into the event Drive
             folder. Leave blank to create a new blank file. Drive folder (above)
             has no link field — it is created fresh each time.

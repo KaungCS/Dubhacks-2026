@@ -27,7 +27,7 @@ export default async function NewTemplatePage() {
         <h1 className="text-2xl font-semibold">New template</h1>
         <p className="text-sm text-neutral-600">
           In the <span className="font-medium text-black">Duplicate from Google link</span>{" "}
-          section, paste Form / Slides / Sheet links. Events created from this
+          section, paste Form / Slides / Sheet / Doc links. Events created from this
           template will Drive-copy those files into the event folder.
         </p>
       </div>
@@ -35,12 +35,13 @@ export default async function NewTemplatePage() {
       <TemplateEditor
         initial={{
           name: "",
-          taskItems: [{ title: "", days_before: 7, role: "" }],
+          taskItems: [],
           fileTypeConfigs: [
             { key: "folder", sourceFileId: null, sourceUrl: null },
             { key: "rsvp_form", sourceFileId: null, sourceUrl: null },
             { key: "slides", sourceFileId: null, sourceUrl: null },
             { key: "signin_sheet", sourceFileId: null, sourceUrl: null },
+            { key: "notes", sourceFileId: null, sourceUrl: null },
           ],
         }}
         submitLabel="Create template"
