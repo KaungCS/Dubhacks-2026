@@ -1,7 +1,8 @@
 import { requireMembership } from "@/lib/auth";
 import { getEvent } from "@/lib/events";
 import { getEventAttendance } from "@/lib/attendance";
-import { listTasksForCalendar, type Task } from "@/lib/tasks";
+import type { Task } from "@/lib/db";
+import { listTasksForCalendar } from "@/lib/tasks";
 import { EventDetail } from "@/components/events/event-detail";
 
 type Params = Promise<{ id: string }>;
@@ -47,7 +48,7 @@ export default async function EventDetailPage({ params }: { params: Params }) {
     const to = new Date(event.ends_at ?? event.starts_at);
     to.setUTCMonth(to.getUTCMonth() + 1);
     const rows = await listTasksForCalendar(workspace.id, from, to);
-    tasks = rows.filter((row) => row.eventId === event.id);
+    tasks = rows.filter((row) => row.event_id === event.id);
   } catch {
     tasks = [];
   }

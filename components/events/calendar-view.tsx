@@ -2,8 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui";
-import type { Event } from "@/lib/db";
-import type { Task } from "@/lib/tasks";
+import type { Event, Task } from "@/lib/db";
 import { EventHoverPreview, EventPreviewModal } from "./event-preview";
 
 type Props = {
@@ -56,8 +55,8 @@ export function CalendarView({ events, tasks, initialYear, initialMonth }: Props
   const tasksByDay = useMemo(() => {
     const map = new Map<string, Task[]>();
     for (const task of tasks) {
-      if (!task.dueAt) continue;
-      const key = parseDayKey(task.dueAt);
+      if (!task.due_at) continue;
+      const key = parseDayKey(task.due_at);
       const list = map.get(key) ?? [];
       list.push(task);
       map.set(key, list);

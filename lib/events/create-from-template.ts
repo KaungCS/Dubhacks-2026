@@ -68,12 +68,12 @@ export async function createEventFromTemplate(
 
   for (const item of template.task_items) {
     await createTask({
-      workspaceId: input.workspaceId,
+      workspace_id: input.workspaceId,
       title: item.title,
-      ...(item.role ? { description: `Role: ${item.role}` } : {}),
-      eventId: event.id,
-      dueAt: subtractDays(input.startsAt, item.days_before),
-      createdBy: input.createdByUserId,
+      description: item.role ? `Role: ${item.role}` : null,
+      event_id: event.id,
+      due_at: subtractDays(input.startsAt, item.days_before).toISOString(),
+      created_by: input.createdByUserId,
     });
   }
 

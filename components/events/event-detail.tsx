@@ -1,6 +1,5 @@
 import Link from "next/link";
-import type { Event } from "@/lib/db";
-import type { Task } from "@/lib/tasks";
+import type { Event, Task } from "@/lib/db";
 import { eventLinks } from "@/lib/events";
 
 type Attendance = { rsvps: number; attended: number };
@@ -124,8 +123,8 @@ export function EventDetail({ event, attendance, tasks }: Props) {
               >
                 <span className="text-black">{task.title}</span>
                 <span className="text-neutral-500">
-                  {task.dueAt
-                    ? `due ${new Date(task.dueAt).toLocaleDateString()}`
+                  {task.due_at
+                    ? `due ${new Date(task.due_at).toLocaleDateString()}`
                     : "no due date"}
                   {` · ${task.status}`}
                 </span>
