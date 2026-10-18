@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { buttonClass, Page, Tabs } from "@/components/ui";
+import { CalendarView } from "@/components/events/calendar-view";
 import {
   EngagementTab,
   FILE_COLUMNS,
@@ -51,6 +52,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
   const tab: TabKey = TABS.find((t) => t.key === asked)?.key ?? "files";
 
   const now = clock();
+  const today = new Date(now);
   const [allEvents, templates, tasks, polls] = await Promise.all([
     listEvents(workspace.id, new Date(now - 365 * DAY), new Date(now + 365 * DAY)),
     listTemplates(workspace.id),
@@ -141,6 +143,22 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
           {waiting[0] ? <span className="truncate text-sm text-neutral-600">{waiting[0].question}</span> : null}
         </Link>
       </div>
+
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-semibold">Calendar</h2>
+          <Link href="/calendar" className="text-sm underline-offset-2 hover:underline">
+            Open full calendar
+          </Link>
+        </div>
+        <CalendarView
+          events={allEvents}
+          tasks={tasks}
+          initialYear={today.getFullYear()}
+          initialMonth={today.getMonth()}
+          todayKey={today.toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" })}
+        />
+      </section>
 
       <Tabs label="Dashboard views" current={tab} items={TABS.map((t) => ({ ...t, href: t.key === "files" ? "/" : `/?tab=${t.key}` }))} />
 

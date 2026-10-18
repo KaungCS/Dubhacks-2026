@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
+import { EventsOverview } from "@/components/events/events-overview";
 
-// The calendar is now the Events page's calendar view.
 export default function CalendarPage() {
-  redirect("/events?view=calendar");
+  return <EventsOverview view="calendar" />;
 }

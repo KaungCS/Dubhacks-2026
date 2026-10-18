@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { nav } from '@/lib/nav'
 
 // Pages without their own sidebar entry light up their parent.
-const aliases: Record<string, string> = { '/calendar': '/events', '/metrics': '/' }
+const aliases: Record<string, string> = { '/metrics': '/' }
 
 function isActive(href: string, pathname: string) {
   const path = aliases[pathname] ?? pathname
