@@ -172,7 +172,6 @@ export type Database = {
           title: string | null
           joined_at: string
           left_at: string | null
-          last_emailed_on: string | null
           last_seen_at: string | null
         }
         Insert: {
@@ -183,7 +182,6 @@ export type Database = {
           title?: string | null
           joined_at?: string
           left_at?: string | null
-          last_emailed_on?: string | null
           last_seen_at?: string | null
         }
         Update: {
@@ -194,7 +192,6 @@ export type Database = {
           title?: string | null
           joined_at?: string
           left_at?: string | null
-          last_emailed_on?: string | null
           last_seen_at?: string | null
         }
         Relationships: [
@@ -371,14 +368,17 @@ export type Database = {
         Row: {
           task_id: string
           user_id: string
+          completed_at: string | null
         }
         Insert: {
           task_id: string
           user_id: string
+          completed_at?: string | null
         }
         Update: {
           task_id?: string
           user_id?: string
+          completed_at?: string | null
         }
         Relationships: [
           {
