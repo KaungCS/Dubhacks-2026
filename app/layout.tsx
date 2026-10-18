@@ -52,7 +52,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-screen font-sans antialiased">
         <div className="md:flex">
           {current && (
-            <aside className="flex flex-col gap-3 border-b border-neutral-200 bg-neutral-50 px-3 py-4 md:sticky md:top-0 md:h-screen md:w-56 md:shrink-0 md:overflow-y-auto md:border-b-0 md:border-r">
+            <aside className="flex flex-col gap-3 border-b border-neutral-200 bg-neutral-50 px-3 py-4 md:sticky md:top-0 md:z-30 md:h-screen md:w-56 md:shrink-0 md:border-b-0 md:border-r">
               <div className="flex flex-wrap items-center justify-between gap-2 px-3 md:block md:space-y-3">
                 <div>
                   <p className="font-semibold">{current.workspace.name}</p>
