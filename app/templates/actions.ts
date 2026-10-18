@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireMembership } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { createTemplate, updateTemplate } from "@/lib/events";
 import type { FileTypeKey, TemplateTaskItem } from "@/lib/events/types";
 
@@ -10,7 +10,7 @@ export async function actionCreateTemplate(form: {
   taskItems: TemplateTaskItem[];
   fileTypes: FileTypeKey[];
 }) {
-  const { workspace } = await requireMembership();
+  const { workspace } = await requirePermission("templates:edit");
   const template = await createTemplate({
     workspaceId: workspace.id,
     name: form.name,
@@ -26,7 +26,7 @@ export async function actionUpdateTemplate(form: {
   taskItems: TemplateTaskItem[];
   fileTypes: FileTypeKey[];
 }) {
-  await requireMembership();
+  await requirePermission("templates:edit");
   await updateTemplate(form.templateId, {
     name: form.name,
     taskItems: form.taskItems,
