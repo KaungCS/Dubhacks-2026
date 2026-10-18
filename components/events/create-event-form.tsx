@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Button, Input, Select } from "@/components/ui";
 import type { EventTemplate } from "@/lib/events/types";
@@ -40,9 +41,9 @@ export function CreateEventForm({ templates }: Props) {
     return (
       <p className="text-sm text-neutral-600">
         No templates yet.{" "}
-        <a href="/templates/new" className="underline-offset-2 hover:underline">
+        <Link href="/templates/new" className="underline-offset-2 hover:underline">
           Create a template
-        </a>{" "}
+        </Link>{" "}
         first.
       </p>
     );
