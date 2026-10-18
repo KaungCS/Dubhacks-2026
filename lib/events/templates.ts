@@ -1,9 +1,11 @@
 import { getDb } from "@/lib/db";
 import {
-  parseFileTypes,
+  fileTypeConfigsToKeys,
+  parseFileTypeConfigs,
   parseTaskItems,
+  serializeFileTypes,
   type EventTemplate,
-  type FileTypeKey,
+  type FileTypeConfig,
   type TemplateTaskItem,
 } from "./types";
 
@@ -15,12 +17,14 @@ function mapTemplate(row: {
   file_types: unknown;
   created_at: string;
 }): EventTemplate {
+  const file_type_configs = parseFileTypeConfigs(row.file_types);
   return {
     id: row.id,
     workspace_id: row.workspace_id,
     name: row.name,
     task_items: parseTaskItems(row.task_items),
-    file_types: parseFileTypes(row.file_types),
+    file_types: fileTypeConfigsToKeys(file_type_configs),
+    file_type_configs,
     created_at: row.created_at,
   };
 }
@@ -52,7 +56,7 @@ export type UpsertTemplateInput = {
   workspaceId: string;
   name: string;
   taskItems: TemplateTaskItem[];
-  fileTypes: FileTypeKey[];
+  fileTypeConfigs: FileTypeConfig[];
 };
 
 export async function createTemplate(input: UpsertTemplateInput): Promise<EventTemplate> {
@@ -62,7 +66,7 @@ export async function createTemplate(input: UpsertTemplateInput): Promise<EventT
       workspace_id: input.workspaceId,
       name: input.name,
       task_items: input.taskItems,
-      file_types: input.fileTypes,
+      file_types: serializeFileTypes(input.fileTypeConfigs),
     })
     .select("*")
     .single();
@@ -80,7 +84,7 @@ export async function updateTemplate(
     .update({
       name: input.name,
       task_items: input.taskItems,
-      file_types: input.fileTypes,
+      file_types: serializeFileTypes(input.fileTypeConfigs),
     })
     .eq("id", templateId)
     .select("*")

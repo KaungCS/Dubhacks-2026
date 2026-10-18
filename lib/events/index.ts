@@ -13,13 +13,20 @@ export {
   eventLinks,
   parseTaskItems,
   parseFileTypes,
+  parseFileTypeConfigs,
+  serializeFileTypes,
+  buildFileTypeConfigs,
   ALL_FILE_TYPES,
+  DUPLICATABLE_FILE_TYPES,
+  FILE_TYPE_EXPECT_KIND,
 } from "./types";
 export type {
   Event,
   EventTemplate,
   TemplateTaskItem,
   FileTypeKey,
+  FileTypeConfig,
+  FileTypeSource,
   EventLinks,
   CreateFromTemplateInput,
 } from "./types";
