@@ -9,13 +9,19 @@ import { actionCreateEventFromTemplate } from "@/app/events/actions";
 
 type Props = {
   templates: EventTemplate[];
+  /** Preselected from ?template= (the "Plan from a template" cards). */
+  initialTemplateId?: string;
+  /** YYYY-MM-DD from ?date= (clicking a calendar day); prefills 6 to 7 PM. */
+  initialDate?: string;
 };
 
-export function CreateEventForm({ templates }: Props) {
-  const [templateId, setTemplateId] = useState(templates[0]?.id ?? "");
+export function CreateEventForm({ templates, initialTemplateId, initialDate }: Props) {
+  const [templateId, setTemplateId] = useState(
+    templates.some((t) => t.id === initialTemplateId) ? initialTemplateId! : (templates[0]?.id ?? ""),
+  );
   const [title, setTitle] = useState("");
-  const [startsAt, setStartsAt] = useState("");
-  const [endsAt, setEndsAt] = useState("");
+  const [startsAt, setStartsAt] = useState(initialDate ? `${initialDate}T18:00` : "");
+  const [endsAt, setEndsAt] = useState(initialDate ? `${initialDate}T19:00` : "");
   const [location, setLocation] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);

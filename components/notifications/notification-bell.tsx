@@ -75,7 +75,7 @@ export function NotificationMenu({ initialUnread }: { initialUnread: number }) {
         Notifications{unread > 0 && ` (${unread > 99 ? '99+' : unread})`}
       </button>
       {open && (
-        <div className="absolute right-0 z-20 mt-2 w-80 rounded-2xl border border-neutral-200 bg-white">
+        <div className="absolute right-0 z-20 mt-2 w-80 max-w-[calc(100vw-2rem)] md:left-0 md:right-auto rounded-2xl border border-neutral-200 bg-white">
           <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-2 text-sm">
             <span className="font-semibold">Notifications</span>
             <button type="button" onClick={() => markRead()} disabled={unread === 0} className="text-neutral-500 hover:underline disabled:opacity-40">
