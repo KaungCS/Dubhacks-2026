@@ -3,8 +3,9 @@ import { requireMembership } from "@/lib/auth";
 import { listTemplates } from "@/lib/events";
 import { CreateEventForm } from "@/components/events/create-event-form";
 
-export default async function NewEventPage() {
+export default async function NewEventPage({ searchParams }: PageProps<"/events/new">) {
   const { workspace } = await requireMembership();
+  const { template, date } = await searchParams;
 
   let templates = [] as Awaited<ReturnType<typeof listTemplates>>;
   let loadError: string | null = null;
@@ -32,7 +33,11 @@ export default async function NewEventPage() {
       </div>
 
       {loadError ? <p className="text-sm text-red-600">{loadError}</p> : null}
-      <CreateEventForm templates={templates} />
+      <CreateEventForm
+        templates={templates}
+        initialTemplateId={typeof template === "string" ? template : undefined}
+        initialDate={typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : undefined}
+      />
     </div>
   );
 }
