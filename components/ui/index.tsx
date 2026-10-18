@@ -1,5 +1,6 @@
 import type { ComponentProps, ReactNode } from 'react'
 import Link from 'next/link'
+import { PendingLabel } from './pending-label'
 
 // Shared look (see "Design" in TEAM_PLAN.md). Use these instead of styling your own.
 // For a link that looks like a button: <Link className={buttonClass} href="...">.
@@ -72,7 +73,8 @@ export function ProgressBar({ value, max, label }: { value: number; max: number;
   )
 }
 
-// Segmented control made of links, so server pages can switch views with a search param.
+// Segmented control made of links, so server pages can switch views with a search param. The clicked
+// tab dims until its view arrives.
 export function Tabs({ items, current, label }: { items: { key: string; label: string; href: string }[]; current: string; label: string }) {
   return (
     <nav aria-label={label} className="flex max-w-full flex-wrap gap-1 self-start rounded-full bg-neutral-100 p-1">
@@ -83,9 +85,26 @@ export function Tabs({ items, current, label }: { items: { key: string; label: s
           aria-current={t.key === current ? 'page' : undefined}
           className={`rounded-full border px-4 py-1.5 text-sm ${t.key === current ? 'border-black bg-white text-black' : 'border-transparent text-neutral-700 hover:text-black'} ${focus}`}
         >
-          {t.label}
+          <PendingLabel>{t.label}</PendingLabel>
         </Link>
       ))}
     </nav>
+  )
+}
+
+// What a page shows while its data loads (each route's loading.tsx), so a click answers right away.
+// Flat grey blocks in the shape of a page; no animation.
+export function PageSkeleton() {
+  return (
+    <div aria-busy="true" className="space-y-6">
+      <span className="sr-only">Loading…</span>
+      <div className="h-8 w-48 rounded-full bg-neutral-100" />
+      <div className="grid gap-3 md:grid-cols-3">
+        <div className="h-24 rounded-2xl bg-neutral-100" />
+        <div className="h-24 rounded-2xl bg-neutral-100" />
+        <div className="h-24 rounded-2xl bg-neutral-100" />
+      </div>
+      <div className="h-64 rounded-2xl bg-neutral-100" />
+    </div>
   )
 }
