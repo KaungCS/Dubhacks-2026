@@ -17,7 +17,13 @@ export function deriveStatus(assignees: Assignee[]): Status | null {
 export const canSetCompletion = (actor: Actor, assigneeId: string | null) =>
   actor.isAdmin || (assigneeId !== null && assigneeId === actor.id)
 
-export const isOverdue = (task: { due_at: string | null; status: Status }, now = Date.now()) =>
+// A prereq's tagged officers hear it's done at most once per cooldown, so completing and undoing
+// repeatedly can't flood them.
+export const PREREQ_COOLDOWN_MS = 2 * 60_000
+export const prereqNotifyDue = (notifiedAt: string | null, now = Date.now()) =>
+  !notifiedAt || now - Date.parse(notifiedAt) >= PREREQ_COOLDOWN_MS
+
+export const isOverdue =(task: { due_at: string | null; status: Status }, now = Date.now()) =>
   !!task.due_at && task.status !== 'done' && Date.parse(task.due_at) < now
 
 // ponytail: Pacific for the pilot, same as polls; switch to the browser's zone if clubs span zones.

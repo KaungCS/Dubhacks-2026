@@ -439,6 +439,7 @@ export type Database = {
           difficulty: Database["public"]["Enums"]["task_difficulty"]
           is_prereq: boolean
           completed_at: string | null
+          prereq_notified_at: string | null
           created_by: string | null
           created_at: string
         }
@@ -453,6 +454,7 @@ export type Database = {
           difficulty?: Database["public"]["Enums"]["task_difficulty"]
           is_prereq?: boolean
           completed_at?: string | null
+          prereq_notified_at?: string | null
           created_by?: string | null
           created_at?: string
         }
@@ -467,6 +469,7 @@ export type Database = {
           difficulty?: Database["public"]["Enums"]["task_difficulty"]
           is_prereq?: boolean
           completed_at?: string | null
+          prereq_notified_at?: string | null
           created_by?: string | null
           created_at?: string
         }
